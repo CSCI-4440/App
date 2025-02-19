@@ -2,7 +2,7 @@ import React from "react";
 import { View, StyleSheet } from "react-native";
 import { Paragraph } from "react-native-paper";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
-
+import Config from '../config';
 interface LocationInputProps {
   placeholder: string;
   setAddress: (address: string) => void;
@@ -27,7 +27,7 @@ const LocationInput: React.FC<LocationInputProps> = ({ placeholder, setAddress, 
           }
         }}
         query={{
-          key: "AIzaSyD3aHzwZTHACytWzzE0SQMKOWeh6wrybTk",
+          key: Config.GOOGLE_API_KEY,
           language: "en",
         }}
         fetchDetails={true}

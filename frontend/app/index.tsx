@@ -36,7 +36,7 @@ export default function Index() {
       });
 
       console.log("API Response:", response.data);
-      setApiResponse({ ...response.data }); // Fix: Ensure re-render
+      setApiResponse({ ...response.data });
     } catch (error) {
       console.error("Error fetching route data:", error);
     } finally {
@@ -44,7 +44,7 @@ export default function Index() {
     }
   };
 
-  console.log("Current apiResponse state:", apiResponse); // Debugging
+  console.log("Current apiResponse state:", apiResponse);
 
   return (
     <ScrollView style={styles.container}>

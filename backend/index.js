@@ -1,14 +1,17 @@
+require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const API_KEY = "AIzaSyD3aHzwZTHACytWzzE0SQMKOWeh6wrybTk";
+const API_KEY = process.env.GOOGLE_API_KEY
 
 app.use(express.json());
 
 /* Input start and end coordinates, returns multiple routes */
 app.post("/api/routes", async (req, res) => {
+
+    console.log(API_KEY)
 
     const { startLat, startLong, destinationLat, destinationLong } = req.body;
 
