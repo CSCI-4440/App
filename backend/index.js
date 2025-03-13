@@ -1,17 +1,28 @@
 require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
+const cors = require("cors");
+
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 const API_KEY = process.env.GOOGLE_API_KEY
 
+app.use(cors());
+
 app.use(express.json());
 
-/* Input start and end coordinates, returns multiple routes */
-app.post("/api/routes", async (req, res) => {
+app.get("/test" , async (req, res) => {
+    res.send("hello");
+})
 
-    console.log(API_KEY)
+/* Input start and end coordinates, returns multiple routes */
+app.get("/api/routes", async (req, res) => {
+
+    res.send("hellso")
+
+    console.log("calling the api1")
 
     const { startLat, startLong, destinationLat, destinationLong } = req.body;
 
@@ -20,6 +31,8 @@ app.post("/api/routes", async (req, res) => {
     }
 
     const url = "https://routes.googleapis.com/directions/v2:computeRoutes";
+
+    console.log("calling the api")
 
     const headers = {
         "Content-Type": "application/json",
@@ -35,8 +48,11 @@ app.post("/api/routes", async (req, res) => {
         "computeAlternativeRoutes": true
     };
 
+    console.log(body)
+
     try {
         const response = await axios.post(url, body, { headers });
+        console.log(response)
         res.json(response.data);
     } catch (error) {
         console.error("Error fetching route data:", error.message);
