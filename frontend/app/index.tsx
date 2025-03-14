@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Button, ActivityIndicator, ScrollView, StyleSheet } from "react-native";
+import React, { useState , useRef } from "react";
+import { Button, ActivityIndicator, ScrollView, StyleSheet, View} from "react-native";
 import { Text } from "react-native-paper";
 import axios from "axios";
 import 'react-native-get-random-values';
@@ -17,6 +17,23 @@ export default function Index() {
   const [apiResponse, setApiResponse] = useState(null);
   const [loading, setLoading] = useState<boolean>(false);
 
+  const startInputRef = useRef<any>(null);
+  const destinationInputRef = useRef<any>(null);
+
+  // reset
+  const clearOptions = () => {
+    setStartAddress("")
+    setDestinationAddress("")
+    setStartLat(null)
+    setStartLong(null)
+    setDestinationLat(null)
+    setDestinationLong(null)
+    setApiResponse(null)
+    setLoading(false)
+    startInputRef.current?.clear()
+    destinationInputRef.current?.clear()
+  }
+
   const getRoutes = async () => {
     console.log("Start Address:", startAddress);
     console.log("Destination Address:", destinationAddress);
@@ -27,18 +44,16 @@ export default function Index() {
     }
 
     setLoading(true);
+
     try {
-      const response = await axios.post("http://localhost:3000/api/routes", {
-        startLat,
-        startLong,
-        destinationLat,
-        destinationLong,
-      });
+      const response = await axios.get(
+        `http://10.0.2.2:3000/api/routes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}`
+      );
 
       console.log("API Response:", response.data);
       setApiResponse({ ...response.data });
     } catch (error) {
-      console.error("Error fetching route data:", error);
+      console.error("Error fetching route data api call:", error);
     } finally {
       setLoading(false);
     }
@@ -47,7 +62,7 @@ export default function Index() {
   console.log("Current apiResponse state:", apiResponse);
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} keyboardShouldPersistTaps="always" >
 
       {/* Start Address Input */}
       <LocationInput
@@ -56,6 +71,7 @@ export default function Index() {
         setAddress={setStartAddress}
         setLat={setStartLat}
         setLong={setStartLong}
+        inputRef={startInputRef}
       />
 
       {/* Destination Address Input */}
@@ -65,9 +81,20 @@ export default function Index() {
         setAddress={setDestinationAddress}
         setLat={setDestinationLat}
         setLong={setDestinationLong}
+        inputRef={destinationInputRef}
       />
 
-      <Button title="Find Routes" onPress={getRoutes} />
+    
+      <View style={styles.buttonWrapper}>
+        <View style={styles.buttonContainer}>
+          <Button title="Find Routes" onPress={getRoutes} />
+        </View>
+        <View style={styles.buttonContainer}>
+          <Button title="CLEAR CHOICES" onPress={clearOptions} />
+        </View>
+      </View>
+
+
       {loading && <ActivityIndicator size="large" color="#0000ff" />}
 
         <ScrollView>
@@ -92,4 +119,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "black",
   },
+  buttonWrapper: {
+    flexDirection: "column",
+  },
+  buttonContainer: {
+    marginBottom: 10, // Adjust spacing as needed
+  }
 });

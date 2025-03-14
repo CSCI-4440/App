@@ -17,15 +17,12 @@ app.get("/test" , async (req, res) => {
     res.send("hello");
 })
 
-/* Input start and end coordinates, returns multiple routes */
 app.get("/api/routes", async (req, res) => {
-
-    res.send("hellso")
-
-    console.log("calling the api1")
-
-    const { startLat, startLong, destinationLat, destinationLong } = req.body;
-
+    
+    console.log("calling the api");
+    
+    const { startLat, startLong, destinationLat, destinationLong } = req.query;
+    
     if (!startLat || !startLong || !destinationLat || !destinationLong) {
         return res.status(400).json({ error: "Missing required parameters" });
     }
@@ -48,8 +45,6 @@ app.get("/api/routes", async (req, res) => {
         "computeAlternativeRoutes": true
     };
 
-    console.log(body)
-
     try {
         const response = await axios.post(url, body, { headers });
         console.log(response)
@@ -60,6 +55,6 @@ app.get("/api/routes", async (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });

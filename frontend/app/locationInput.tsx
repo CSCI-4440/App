@@ -3,20 +3,24 @@ import { View, StyleSheet } from "react-native";
 import { Paragraph } from "react-native-paper";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import Config from '../config';
+
 interface LocationInputProps {
   placeholder: string;
   setAddress: (address: string) => void;
   setLat: (lat: number) => void;
   setLong: (long: number) => void;
+  inputRef?: any;
 }
 
-const LocationInput: React.FC<LocationInputProps> = ({ placeholder, setAddress, setLat, setLong }) => {
+const LocationInput: React.FC<LocationInputProps> = ({ placeholder, setAddress, setLat, setLong, inputRef }) => {
   return (
     <View style={styles.autoCompleteContainer}>
       <Paragraph>{placeholder}</Paragraph>
       <GooglePlacesAutocomplete
+        ref={inputRef}
         placeholder={placeholder}
         onPress={(data, details = null) => {
+          console.log(data)
           if (details) {
             const address = details.formatted_address;
             const { lat, lng } = details.geometry.location;
@@ -24,6 +28,8 @@ const LocationInput: React.FC<LocationInputProps> = ({ placeholder, setAddress, 
             setLat(lat);
             setLong(lng);
             console.log(`${placeholder} Selected:`, address, lat, lng);
+          } else {
+            console.log("nothing")
           }
         }}
         query={{
