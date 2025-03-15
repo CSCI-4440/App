@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
 const cors = require("cors");
+const Route = require("./Route");
 
 
 const app = express();
@@ -13,23 +14,22 @@ app.use(cors());
 
 app.use(express.json());
 
-app.get("/test" , async (req, res) => {
+app.get("/test", async (req, res) => {
     res.send("hello");
 })
 
 app.get("/api/routes", async (req, res) => {
-    
-    console.log("calling the api");
-    
+
+    console.log("calling the api!!!!!!!!!");
+
+
     const { startLat, startLong, destinationLat, destinationLong } = req.query;
-    
+
     if (!startLat || !startLong || !destinationLat || !destinationLong) {
         return res.status(400).json({ error: "Missing required parameters" });
     }
 
     const url = "https://routes.googleapis.com/directions/v2:computeRoutes";
-
-    console.log("calling the api")
 
     const headers = {
         "Content-Type": "application/json",
@@ -47,7 +47,16 @@ app.get("/api/routes", async (req, res) => {
 
     try {
         const response = await axios.post(url, body, { headers });
-        console.log(response)
+        let routes = []
+        let responseRoutes = response.data.routes;
+        for (const route of responseRoutes) {
+            let legs = route.legs[0];
+            
+
+            let r = new Route(legs);
+            r.getWaypointsEveryXMeters();
+            routes.push(r);
+        }
         res.json(response.data);
     } catch (error) {
         console.error("Error fetching route data:", error.message);
