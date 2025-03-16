@@ -4,7 +4,6 @@ const axios = require('axios');
 const cors = require("cors");
 const Route = require("./Route");
 
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -19,45 +18,42 @@ app.get("/test", async (req, res) => {
 })
 
 app.get("/api/routes", async (req, res) => {
-
-    console.log("calling the api!!!!!!!!!");
-
-
+    console.log("Calling the API!");
     const { startLat, startLong, destinationLat, destinationLong } = req.query;
-
     if (!startLat || !startLong || !destinationLat || !destinationLong) {
         return res.status(400).json({ error: "Missing required parameters" });
     }
-
     const url = "https://routes.googleapis.com/directions/v2:computeRoutes";
-
     const headers = {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": API_KEY,
         "X-Goog-FieldMask": "routes.duration,routes.distanceMeters,routes.legs"
     };
-
     const body = {
-        "origin": { "location": { "latLng": { "latitude": startLat, "longitude": startLong } } },
-        "destination": { "location": { "latLng": { "latitude": destinationLat, "longitude": destinationLong } } },
-        "travelMode": "DRIVE",
-        "routingPreference": "TRAFFIC_AWARE",
-        "computeAlternativeRoutes": true
+        origin: { location: { latLng: { latitude: parseFloat(startLat), longitude: parseFloat(startLong) } } },
+        destination: { location: { latLng: { latitude: parseFloat(destinationLat), longitude: parseFloat(destinationLong) } } },
+        travelMode: "DRIVE",
+        routingPreference: "TRAFFIC_AWARE",
+        computeAlternativeRoutes: true
     };
-
     try {
         const response = await axios.post(url, body, { headers });
-        let routes = []
-        let responseRoutes = response.data.routes;
-        for (const route of responseRoutes) {
-            let legs = route.legs[0];
-            
-
-            let r = new Route(legs);
-            r.getWaypointsEveryXMeters();
-            routes.push(r);
+        const routes = [];
+        const responseRoutes = response.data.routes;
+        for (const route of responseRoutes) 
+        {
+            const legs = route.legs[0];
+            const r = new Route(legs);
+            const waypoints = await r.getWaypointsEveryXMeters(); 
+            routes.push({
+                startAddress: r.startAddress,
+                destinationAddress: r.destinationAddress,
+                distanceMeters: r.distanceMeters,
+                durationSeconds: r.durationSeconds,
+                waypoints: waypoints
+            });
         }
-        res.json(response.data);
+        res.json({ routes });
     } catch (error) {
         console.error("Error fetching route data:", error.message);
         res.status(error.response?.status || 500).json({ error: "Failed to fetch routes" });
