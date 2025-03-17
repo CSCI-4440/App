@@ -40,20 +40,20 @@ app.get("/api/routes", async (req, res) => {
         const response = await axios.post(url, body, { headers });
         const routes = [];
         const responseRoutes = response.data.routes;
-        console.log("Number of routes: ", responseRoutes.length);
         for (const route of responseRoutes) 
         {
             const legs = route.legs[0];
             const r = new Route(legs);
-            const waypoints = r.getWaypointsEveryXMeters(); 
-            let score = await r.getPrecipitationPercent();
-            console.log("Route Score:", score,"%");
+            const waypoints = await r.getWaypointsEveryXMeters(); 
             routes.push({
-                route: r,
-                waypoints: waypoints,
+                startAddress: r.startAddress,
+                destinationAddress: r.destinationAddress,
+                distanceMeters: r.distanceMeters,
+                durationSeconds: r.durationSeconds,
+                waypoints: waypoints
             });
         }
-        res.json(routes);
+        res.json(response.data);
     } catch (error) {
         console.error("Error fetching route data:", error.message);
         res.status(error.response?.status || 500).json({ error: "Failed to fetch routes" });

@@ -12,6 +12,7 @@ class Location
 
     async fetchWeather() 
     {
+        console.log("Fetching weather data..."); 
         const API_KEY = process.env.OPENWEATHER_API_KEY;
         const url = `https://api.openweathermap.org/data/2.5/weather?lat=${this.latitude}&lon=${this.longitude}&units=metric&appid=${API_KEY}`;
         try 
@@ -25,6 +26,7 @@ class Location
                     windSpeed: response.data.wind.speed,
                     visibility: response.data.visibility || null,
             };
+            console.log(`Weather at (${this.latitude}, ${this.longitude}):`, this.weather);
         } 
         catch (error) 
         {
