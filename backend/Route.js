@@ -7,7 +7,12 @@ class Route {
       this.destinationAddress = legs.endLocation.latLng;
       this.distanceMeters = legs.distanceMeters;
       this.durationSeconds = parseInt(legs.duration.replace("s", ""));
+      this.routeData = legs.polyline.encodedPolyline;
       this.legs = legs;
+   }
+
+   get route() {
+      return this.routeData;
    }
 
    async getWaypointsEveryXMeters(intervalMeters = 40233) {

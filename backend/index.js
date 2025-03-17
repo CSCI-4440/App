@@ -53,7 +53,7 @@ app.get("/api/routes", async (req, res) => {
                 waypoints: waypoints
             });
         }
-        res.json({ routes });
+        res.json(response.data);
     } catch (error) {
         console.error("Error fetching route data:", error.message);
         res.status(error.response?.status || 500).json({ error: "Failed to fetch routes" });
