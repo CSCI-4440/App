@@ -1,8 +1,8 @@
-Waypoint: (40.762539, -73.702928), Weather: haze, BAD WEATHER: NO
+Waypoint: (40.762539, -73.702928), Weather: overcast clouds, BAD WEATHER: NO
 Waypoint: (41.019189, -73.817488), Weather: mist, BAD WEATHER: NO
 Waypoint: (41.340729, -73.782781), Weather: overcast clouds, BAD WEATHER: NO
 Waypoint: (41.525468, -73.936265), Weather: mist, BAD WEATHER: NO
-Waypoint: (41.756980, -74.004114), Weather: mist, BAD WEATHER: NO
+Waypoint: (41.756980, -74.004114), Weather: overcast clouds, BAD WEATHER: NO
 Waypoint: (42.095698, -73.917066), Weather: overcast clouds, BAD WEATHER: NO
-Waypoint: (42.434416, -73.830018), Weather: light rain, BAD WEATHER: YES
+Waypoint: (42.434416, -73.830018), Weather: overcast clouds, BAD WEATHER: NO
 Waypoint: (42.735108, -73.682914), Weather: light rain, BAD WEATHER: YES

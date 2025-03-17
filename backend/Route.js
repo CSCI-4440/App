@@ -15,6 +15,10 @@ class Route {
       return this.polyline;
    }
 
+   get getStart() {
+      return this.startAddress;
+   }
+
    async getWaypointsEveryXMeters(intervalMeters = 40233) {
       let waypoints = [];
       let accumulatedDistance = 0;

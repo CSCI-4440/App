@@ -46,14 +46,11 @@ app.get("/api/routes", async (req, res) => {
             const r = new Route(legs);
             const waypoints = await r.getWaypointsEveryXMeters(); 
             routes.push({
-                startAddress: r.startAddress,
-                destinationAddress: r.destinationAddress,
-                distanceMeters: r.distanceMeters,
-                durationSeconds: r.durationSeconds,
+                route: r,
                 waypoints: waypoints
             });
         }
-        res.json(response.data);
+        res.json(routes);
     } catch (error) {
         console.error("Error fetching route data:", error.message);
         res.status(error.response?.status || 500).json({ error: "Failed to fetch routes" });

@@ -35,9 +35,6 @@ export default function Index() {
   }
 
   const getRoutes = async () => {
-    console.log("Start Address:", startAddress);
-    console.log("Destination Address:", destinationAddress);
-
     if (!startLat || !startLong || !destinationLat || !destinationLong) {
       alert("Please select valid addresses before searching for routes.");
       return;
@@ -51,7 +48,7 @@ export default function Index() {
       );
 
       console.log("API Response:", response.data);
-      setApiResponse({ ...response.data });
+      setApiResponse(response.data);
     } catch (error) {
       console.error("Error fetching route data api call:", error);
     } finally {
