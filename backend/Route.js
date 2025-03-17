@@ -9,20 +9,37 @@ class Route {
       this.durationSeconds = parseInt(legs.duration.replace("s", ""));
       this.polyline = legs.polyline.encodedPolyline;
       this.legs = legs;
+      this.locations = [];
    }
 
    get getPolyline() {
       return this.polyline;
    }
 
-   async getWaypointsEveryXMeters(intervalMeters = 40233) {
-      let waypoints = [];
-      let accumulatedDistance = 0;
+   get getStart() {
+      return this.startAddress;
+   }
+
+   async getPrecipitationPercent() {
+      let bad = 0;
       fs.writeFileSync("output.txt", "");
+      for (let loc of this.locations){
+         await loc.fetchWeather();
+         const is_bad_weather = loc.isBadWeather();
+         if (is_bad_weather) {
+            bad += 1;
+         }
+      }
+
+      return bad / this.locations.length;
+   }
+
+   getWaypointsEveryXMeters(intervalMeters = 40233) {
+      let accumulatedDistance = 0;
 
       for (let step of this.legs.steps) {
-         let start = step.startLocation.latLng; 
-         let end = step.endLocation.latLng;     
+         let start = step.startLocation.latLng;
+         let end = step.endLocation.latLng;
          let travelStr = step.localizedValues.distance.text;
          let stepDistance = 0;
 
@@ -41,14 +58,9 @@ class Route {
 
             let newLat = start.latitude + ratio * (end.latitude - start.latitude);
             let newLong = start.longitude + ratio * (end.longitude - start.longitude);
-            waypoints.push({ lat: newLat, lng: newLong });
+            this.locations.push(new Location(newLat, newLong));
 
-            //fetching the weather 
-            const new_location = new Location(newLat, newLong);
-            await new_location.fetchWeather();
-            const is_bad_weather = new_location.isBadWeather();
-            const logLine = `Waypoint: (${newLat.toFixed(6)}, ${newLong.toFixed(6)}), Weather: ${new_location.weather?.conditions}, BAD WEATHER: ${is_bad_weather ? "YES" : "NO"}\n`;
-            fs.appendFileSync("output.txt", logLine);
+
             //reset for next interval
             accumulatedDistance = 0;
             start = { latitude: newLat, longitude: newLong };
@@ -56,7 +68,6 @@ class Route {
          }
          accumulatedDistance += stepDistance;
       }
-      return waypoints;
    }
 }
 module.exports = Route;

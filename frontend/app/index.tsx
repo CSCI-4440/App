@@ -47,9 +47,6 @@ export default function Index() {
 
   // Fetch Routes
   const getRoutes = async () => {
-    console.log("Start Address:", startAddress);
-    console.log("Destination Address:", destinationAddress);
-
     if (!startLat || !startLong || !destinationLat || !destinationLong) {
       alert("Please select valid addresses before searching for routes.");
       return;
@@ -61,7 +58,6 @@ export default function Index() {
       const response = await axios.get(
         `http://10.0.2.2:3000/api/routes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}`
       );
-
       setApiResponse(response.data);
 
       // Extract and decode polylines from the response
@@ -71,6 +67,9 @@ export default function Index() {
 
       setPolylines(decodedPolylines);
       console.log("Number of polylines:", decodedPolylines.length);
+      console.log("API Response:", response.data);
+      setApiResponse(response.data);
+      
     } catch (error) {
       console.error("Error fetching route data:", error);
     } finally {
