@@ -24,6 +24,8 @@ class Manager {
     const timeScore = maxTime ? (maxTime - route.time) / maxTime : 0;
     // Normalize distance: shorter distance gives a higher normalized score.
     const distanceScore = maxDistance ? (maxDistance - route.distance) / maxDistance : 0;
+    
+    const weatherScore = route.weatherScore;
 
     // Combine the three criteria.
     return (route.weatherScore * weightWeather) +
@@ -55,17 +57,6 @@ class Manager {
     // Sort the routes by score (highest first) and return the top 'count' routes.
     const sortedRoutes = routes.sort((a, b) => b.score - a.score);
     return sortedRoutes.slice(0, count);
-  }
-
-  /**
-   * Retrieve routes and evaluate the best options.
-   *
-   * @returns {Array} - The best routes according to weather, time, and distance.
-   */
-  static evaluateRoutes() {
-    const routes = Route.getRoutes();
-
-    return Manager.getBestRoutes(routes);
   }
 }
 
