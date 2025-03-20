@@ -22,7 +22,6 @@ class Route {
 
    async getPrecipitationPercent() {
       let bad = 0;
-      fs.writeFileSync("output.txt", "");
       for (let loc of this.locations){
          await loc.fetchWeather();
          const is_bad_weather = loc.isBadWeather();
