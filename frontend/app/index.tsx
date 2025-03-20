@@ -92,7 +92,7 @@ export default function Index() {
           <Button title="Find Routes" onPress={getRoutes} />
         </View>
         <View style={styles.buttonContainer}>
-          <Button title="CLEAR CHOICES" onPress={clearOptions} />
+          <Button title="Clear Choices" onPress={clearOptions} />
         </View>
       </View>
 
@@ -133,6 +133,11 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    padding: 10,
+    backgroundColor: "#f9f9f9",
+    borderRadius: 5,
   },
   routesContainer: {
     marginTop: 20,

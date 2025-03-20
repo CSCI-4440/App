@@ -55,12 +55,12 @@ const styles = StyleSheet.create({
   input: {
     width: "100%",
     height: 50,
-    borderColor: "black",
+    borderColor: "#ddd",
     borderWidth: 1,
     borderRadius: 5,
     fontSize: 16,
     paddingLeft: 10,
-    backgroundColor: "#fff",
+    backgroundColor: "#f9f9f9",
   },
 });
 
