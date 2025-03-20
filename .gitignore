@@ -1,3 +1,4 @@
 node_modules/
-frontend/config.ts
+config.js
 .env
+*.txt
