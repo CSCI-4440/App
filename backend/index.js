@@ -3,6 +3,7 @@ const express = require('express');
 const axios = require('axios');
 const cors = require("cors");
 const Route = require("./Route");
+const Manager = require("./manager")
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -53,7 +54,8 @@ app.get("/api/routes", async (req, res) => {
                 waypoints: waypoints
             });
         }
-        res.json({ routes });
+        const bestRoutes = Manager.getBestRoutes(routes);
+        res.json({ routes: bestRoutes });
     } catch (error) {
         console.error("Error fetching route data:", error.message);
         res.status(error.response?.status || 500).json({ error: "Failed to fetch routes" });
