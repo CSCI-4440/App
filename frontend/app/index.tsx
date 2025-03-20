@@ -20,7 +20,7 @@ export default function Index() {
   const startInputRef = useRef<any>(null);
   const destinationInputRef = useRef<any>(null);
 
-  // reset
+  // Reset all fields and states.
   const clearOptions = () => {
     setStartAddress("");
     setDestinationAddress("");
@@ -98,20 +98,21 @@ export default function Index() {
 
       {loading && <ActivityIndicator size="large" color="#0000ff" />}
 
-      {/* Display Routes Neatly */}
+      {/* Display Routes Neatly in a scrollable area */}
       {apiResponse && apiResponse.routes && apiResponse.routes.length > 0 ? (
         <View style={styles.routesContainer}>
-          {apiResponse.routes.map((route: any, index: number) => (
-            <View key={index} style={styles.routeCard}>
-              <Text style={styles.routeTitle}>Route {index + 1}</Text>
-            <Text>Time: {(route.durationSeconds / 60).toFixed(1)} minutes</Text>
-            <Text>Distance: {(route.distanceMeters / 1000).toFixed(2)} km</Text>
-            <Text>Weather Score: {route.weatherScore ?? 'N/A'}</Text>
-                          {route.score !== undefined && (
-                <Text>Overall Score: {route.weatherScore.toFixed(2)}</Text>
-              )}
-            </View>
-          ))}
+          <ScrollView style={styles.routesScroll}>
+            {apiResponse.routes.map((route: any, index: number) => (
+              <View key={index} style={styles.routeCard}>
+                <Text style={styles.routeTitle}>Route {index + 1}</Text>
+                <Text>Start Address: {JSON.stringify(route.startAddress)}</Text>
+                <Text>Destination Address: {JSON.stringify(route.destinationAddress)}</Text>
+                <Text>Time: {(route.durationSeconds / 60).toFixed(1)} minutes</Text>
+                <Text>Distance: {(route.distanceMeters / 1000).toFixed(2)} km</Text>
+                <Text>Weather Score: {route.weatherScore ?? 'N/A'}</Text>
+              </View>
+            ))}
+          </ScrollView>
         </View>
       ) : (
         !loading && <Text style={styles.noDataText}>No routes available</Text>
@@ -135,6 +136,11 @@ const styles = StyleSheet.create({
   },
   routesContainer: {
     marginTop: 20,
+    // Fixed height so that the routes area is scrollable
+    height: 300,
+  },
+  routesScroll: {
+    flex: 1,
   },
   routeCard: {
     backgroundColor: "#f9f9f9",
