@@ -39,6 +39,22 @@ app.get("/api/routes", async (req, res) => {
     };
     try {
         const response = await axios.post(url, body, { headers });
+
+        routeDetails = []
+
+        for (const route of response.data.routes) {
+            for (const leg of route.legs) {
+                routeDetails.push({
+                distance: leg.distanceMeters,
+                duration: leg.duration,
+                polyline: leg.polyline.encodedPolyline,
+                start: leg.startLocation.latLng,
+                end: leg.endLocation.latLng,
+                });
+            }
+        }
+        console.log(routeDetails);
+
         const routes = [];
         const responseRoutes = response.data.routes;
         for (const route of responseRoutes) 
@@ -55,7 +71,7 @@ app.get("/api/routes", async (req, res) => {
             });
         }
         const bestRoutes = Manager.getBestRoutes(routes);
-        res.json({ routes: bestRoutes });
+        res.json({ routes: bestRoutes , mapData: routeDetails });
     } catch (error) {
         console.error("Error fetching route data:", error.message);
         res.status(error.response?.status || 500).json({ error: "Failed to fetch routes" });
