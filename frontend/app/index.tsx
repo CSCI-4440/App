@@ -5,7 +5,8 @@ import {
   ActivityIndicator,
   Button,
   ScrollView,
-  Platform
+  Platform,
+  Alert
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Text } from "react-native-paper";
@@ -14,6 +15,7 @@ import "react-native-get-random-values";
 import LocationInput from "./locationInput";
 import { useRouter } from "expo-router";
 import MapView, { Marker, Polyline, Callout } from "react-native-maps";
+
 
 const baseUrl = Platform.OS === "ios" ? "http://129.161.136.89:3000" : "http://129.161.139.185:3000";
 
@@ -34,6 +36,10 @@ export default function Index() {
 
   const startInputRef = useRef<any>(null);
   const destinationInputRef = useRef<any>(null);
+
+
+
+
 
   // For route polylines
   const routeColors = ["blue", "green", "orange", "red", "purple"];
@@ -182,6 +188,7 @@ export default function Index() {
         <View style={styles.searchContainer} pointerEvents="auto">
           <LocationInput
             key="end"
+            header="Enter destination address"
             placeholder="Enter destination address"
             setAddress={setDestinationAddress}
             setLat={setDestinationLat}

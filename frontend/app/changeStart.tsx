@@ -5,7 +5,8 @@ import {
   ScrollView,
   StyleSheet,
   View,
-  Platform
+  Platform,
+  Alert
 } from "react-native";
 import { Text } from "react-native-paper";
 import axios from "axios";
@@ -15,8 +16,10 @@ import MapView, { Marker, Polyline, Callout } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import * as Location from "expo-location";
+import Config from "../config";
 
-const baseUrl = Platform.OS === "ios" ? "http://129.161.139.185:3000" : "http://129.161.139.185:3000";
+const baseUrl = Platform.OS === "ios" ? "http://129.161.136.89:3000" : "http://129.161.139.185:3000";
 
 export default function ChangeStart() {
   const router = useRouter();
@@ -38,6 +41,52 @@ export default function ChangeStart() {
 
   // Colors for drawing routes.
   const routeColors = ["blue", "green", "orange", "red", "purple"];
+
+
+  const requestLocationPermission = async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Permission Denied", "Enable location permissions to continue.");
+      return false;
+    }
+    return true;
+  };
+
+  const getLocation = async () => {
+    const hasPermission = await requestLocationPermission();
+    if (!hasPermission) return;
+  
+    const position = await Location.getCurrentPositionAsync({});
+    setStartLat(position.coords.latitude);
+    setStartLong(position.coords.longitude);
+  
+    console.log("Coordinates:", position.coords.latitude, position.coords.longitude);
+    
+    console.log("Google API called");
+    await reverseGeocode(position.coords.latitude, position.coords.longitude);
+  };
+
+  const reverseGeocode = async (latitude: number, longitude: number) => {
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${Config.GOOGLE_API_KEY}`;
+
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+      if (data.status === "OK" && data.results.length > 0) {
+        console.log(data.results[0].formatted_address)
+        setStartAddress(data.results[0].formatted_address);
+      } else {
+        Alert.alert("Error", "Failed to get address");
+      }
+    } catch (error) {
+      console.error("Geocoding Error:", error);
+      Alert.alert("Error", "Failed to fetch address");
+    }
+  };
+
+  useEffect(() => {
+    getLocation();
+  }, []);
 
   // Polyline decoding function.
   const decodePolyline = (encoded: string) => {
@@ -138,7 +187,8 @@ export default function ChangeStart() {
           <View style={styles.searchBarContainer}>
             <LocationInput
               key="start"
-              placeholder="Enter starting address"
+              header="Enter starting address"
+              placeholder={startAddress || "Enter starting address"}
               setAddress={setStartAddress}
               setLat={setStartLat}
               setLong={setStartLong}
@@ -152,6 +202,7 @@ export default function ChangeStart() {
         <View style={styles.searchBarContainer}>
           <LocationInput
             key="end"
+            header="Enter destination address"
             placeholder="Enter destination address"
             setAddress={setDestinationAddress}
             setLat={setDestinationLat}
@@ -308,6 +359,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
+    color: "black",
   },
   routeButtonRow: {
     flexDirection: "row",
