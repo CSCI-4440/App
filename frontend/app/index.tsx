@@ -84,7 +84,6 @@ export default function Index() {
           />
         </View>
 
-        {/*Blue row with buttons */}
         <View style={styles.routeButtonRow}>
           <View style={{ flex: 1, marginRight: 5 }}>
             <Button title="Find Routes" onPress={getRoutes} color="#fff" />

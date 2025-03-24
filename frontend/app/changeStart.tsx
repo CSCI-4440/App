@@ -1,16 +1,26 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Button, ActivityIndicator, ScrollView, StyleSheet, View, Platform } from "react-native";
+import {
+  Button,
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  View,
+  Platform
+} from "react-native";
 import { Text } from "react-native-paper";
 import axios from "axios";
-import 'react-native-get-random-values';
+import "react-native-get-random-values";
 import LocationInput from "./locationInput";
-import MapView, { Marker, Polyline, Callout } from 'react-native-maps';
+import MapView, { Marker, Polyline, Callout } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
-
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 
 const baseUrl = Platform.OS === "ios" ? "http://localhost:3000" : "http://10.0.2.2:3000";
 
 export default function ChangeStart() {
+  const router = useRouter();
+
   const [startAddress, setStartAddress] = useState<string>("");
   const [destinationAddress, setDestinationAddress] = useState<string>("");
 
@@ -26,10 +36,10 @@ export default function ChangeStart() {
   const destinationInputRef = useRef<any>(null);
   const mapRef = useRef<MapView>(null);
 
-  // Array of colors for displaying multiple routes.
+  // Colors for drawing routes.
   const routeColors = ["blue", "green", "orange", "red", "purple"];
 
-  // Polyline decoding function
+  // Polyline decoding function.
   const decodePolyline = (encoded: string) => {
     let points = [];
     let index = 0, lat = 0, lng = 0;
@@ -56,6 +66,7 @@ export default function ChangeStart() {
     return points;
   };
 
+  // Reset all fields and states.
   const clearOptions = () => {
     setStartAddress("");
     setDestinationAddress("");
@@ -69,7 +80,6 @@ export default function ChangeStart() {
     destinationInputRef.current?.clear();
   };
 
-  // API call to fetch routes from the changeStart endpoint.
   const getRoutes = async () => {
     console.log("Start Address:", startAddress);
     console.log("Destination Address:", destinationAddress);
@@ -84,15 +94,8 @@ export default function ChangeStart() {
       const response = await axios.get(
         `${baseUrl}/api/changeStartRoutes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}`
       );
-
-      if (response.data.routes && response.data.routes.length > 0) {
-        console.log(response.data.routes);
-        console.log(response.data.routes.length, "routes found");
-      }
-
-      if (response.data.mapData && response.data.mapData.length > 0) {
-        setApiResponse(response.data);
-      }
+      // Assume the backend returns both routes and mapData.
+      setApiResponse(response.data);
     } catch (error) {
       console.error("Error fetching route data (Change Start):", error);
     } finally {
@@ -100,7 +103,7 @@ export default function ChangeStart() {
     }
   };
 
-  // Auto-fit the map
+  // Auto-fit the map to include all coordinates from the routes.
   useEffect(() => {
     if (apiResponse?.mapData) {
       let allCoordinates: { latitude: number; longitude: number }[] = [];
@@ -122,32 +125,48 @@ export default function ChangeStart() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container} keyboardShouldPersistTaps="always">
-        {/* Starting Address Input */}
-        <LocationInput
-          key="start"
-          placeholder="Enter starting address"
-          setAddress={setStartAddress}
-          setLat={setStartLat}
-          setLong={setStartLong}
-          inputRef={startInputRef}
-        />
+        {/* Top Row: Back Button (outside the search container) and Starting Address Search */}
+        <View style={styles.topRowContainer}>
+          <View style={styles.backButtonContainer}>
+            <Ionicons
+              name="arrow-back"
+              size={24}
+              color="#007bff"
+              onPress={() => router.back()}
+            />
+          </View>
+          <View style={styles.searchBarContainer}>
+            <LocationInput
+              key="start"
+              placeholder="Enter starting address"
+              setAddress={setStartAddress}
+              setLat={setStartLat}
+              setLong={setStartLong}
+              inputRef={startInputRef}
+              style={styles.searchInput}
+            />
+          </View>
+        </View>
 
         {/* Destination Address Input */}
-        <LocationInput
-          key="end"
-          placeholder="Enter destination address"
-          setAddress={setDestinationAddress}
-          setLat={setDestinationLat}
-          setLong={setDestinationLong}
-          inputRef={destinationInputRef}
-        />
+        <View style={styles.searchBarContainer}>
+          <LocationInput
+            key="end"
+            placeholder="Enter destination address"
+            setAddress={setDestinationAddress}
+            setLat={setDestinationLat}
+            setLong={setDestinationLong}
+            inputRef={destinationInputRef}
+            style={styles.searchInput}
+          />
+        </View>
 
-        <View style={styles.buttonWrapper}>
-          <View style={styles.buttonContainer}>
-            <Button title="Find Routes" onPress={getRoutes} />
+        <View style={styles.routeButtonRow}>
+          <View style={{ flex: 1, marginRight: 5 }}>
+            <Button title="Find Routes" onPress={getRoutes} color="#fff" />
           </View>
-          <View style={styles.buttonContainer}>
-            <Button title="Clear Choices" onPress={clearOptions} />
+          <View style={{ flex: 1, marginLeft: 5 }}>
+            <Button title="Clear Choices" onPress={clearOptions} color="#fff" />
           </View>
         </View>
 
@@ -178,7 +197,9 @@ export default function ChangeStart() {
                   <Marker coordinate={route.start}>
                     <Callout>
                       <View>
-                        <Text style={{ fontWeight: "bold" }}>Route {index + 1} Start</Text>
+                        <Text style={{ fontWeight: "bold" }}>
+                          Route {index + 1} Start
+                        </Text>
                         <Text>Time: {route.duration}</Text>
                         <Text>Distance: {route.distance} m</Text>
                       </View>
@@ -189,7 +210,9 @@ export default function ChangeStart() {
                   <Marker coordinate={route.end}>
                     <Callout>
                       <View>
-                        <Text style={{ fontWeight: "bold" }}>Route {index + 1} End</Text>
+                        <Text style={{ fontWeight: "bold" }}>
+                          Route {index + 1} End
+                        </Text>
                         <Text>Time: {route.duration}</Text>
                         <Text>Distance: {route.distance} m</Text>
                       </View>
@@ -208,10 +231,19 @@ export default function ChangeStart() {
                 <View key={index} style={styles.routeCard}>
                   <Text style={styles.routeTitle}>Route {index + 1}</Text>
                   <Text>Start Address: {JSON.stringify(route.startAddress)}</Text>
-                  <Text>Destination Address: {JSON.stringify(route.destinationAddress)}</Text>
-                  <Text>Time: {(route.durationSeconds / 60).toFixed(1)} minutes</Text>
-                  <Text>Distance: {(route.distanceMeters / 1000).toFixed(2)} km</Text>
-                  <Text>Weather Score: {route.weatherScore ?? "N/A"}</Text>
+                  <Text>
+                    Destination Address:{" "}
+                    {JSON.stringify(route.destinationAddress)}
+                  </Text>
+                  <Text>
+                    Time: {(route.durationSeconds / 60).toFixed(1)} minutes
+                  </Text>
+                  <Text>
+                    Distance: {(route.distanceMeters / 1000).toFixed(2)} km
+                  </Text>
+                  <Text>
+                    Weather Score: {route.weatherScore ?? "N/A"}
+                  </Text>
                 </View>
               ))}
             </ScrollView>
@@ -220,19 +252,51 @@ export default function ChangeStart() {
           !loading && <Text style={styles.noDataText}>No routes available</Text>
         )}
       </ScrollView>
-    </SafeAreaView>  
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 10,
-    backgroundColor: "#fff",
-  },
   safeArea: {
     flex: 1,
     backgroundColor: "#fff",
+  },
+  container: {
+    flex: 1,
+    paddingVertical: 10,
+    backgroundColor: "#fff",
+  },
+  topRowContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "90%",
+    alignSelf: "center",
+    marginBottom: 10,
+  },
+  backButtonContainer: {
+    width: 30,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  searchBarContainer: {
+    flex: 1,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    marginLeft: 10,
+  },
+  searchInput: {
+    flex: 1,
+  },
+  routeButtonRow: {
+    flexDirection: "row",
+    marginBottom: 16,
+    padding: 10,
+    backgroundColor: "#007bff",
+    borderRadius: 12,
+    width: "90%",
+    alignSelf: "center",
   },
   buttonWrapper: {
     flexDirection: "column",
