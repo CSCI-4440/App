@@ -56,13 +56,12 @@ router.get("/api/changeStartRoutes", async (req, res) => {
     for (const route of responseRoutes) {
       const legs = route.legs[0];
       const r = new Route(legs);
-      const waypoints = await r.getWaypointsEveryXMeters();
       routes.push({
         startAddress: r.startAddress,
         destinationAddress: r.destinationAddress,
         distanceMeters: r.distanceMeters,
         durationSeconds: r.durationSeconds,
-        waypoints: waypoints,
+        waypoints: await r.getWaypointsEveryXMeters(),
         weather: await r.getPrecipitationPercent()
       });
       console.log(routes)

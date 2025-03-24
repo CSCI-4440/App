@@ -16,7 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
-const baseUrl = Platform.OS === "ios" ? "http://129.161.136.89:3000" : "http://10.0.2.2:3000";
+const baseUrl = Platform.OS === "ios" ? "http://129.161.139.185:3000" : "http://129.161.139.185:3000";
 
 export default function ChangeStart() {
   const router = useRouter();
@@ -225,32 +225,52 @@ export default function ChangeStart() {
         </MapView>
 
         {apiResponse && apiResponse.routes && apiResponse.routes.length > 0 ? (
-          <View style={styles.routesContainer}>
-            <ScrollView style={styles.routesScroll}>
-              {apiResponse.routes.map((route: any, index: number) => (
+        <View style={styles.routesContainer}>
+          <ScrollView style={styles.routesScroll}>
+            {apiResponse.routes.map((route: any, index: number) => {
+              const hours = Math.floor(route.durationSeconds / 3600);
+              const minutes = Math.floor((route.durationSeconds % 3600) / 60);
+              let weatherClass = '';
+              const weatherScore = 100 - Math.round(route.weather * 100);
+              if (weatherScore >= 90) {
+                weatherClass = 'Great';
+              } else if (weatherScore >= 70) {
+                weatherClass = 'Good';
+              } else if (weatherScore >= 50) {
+                weatherClass = 'Fair';
+              } else if (weatherScore >= 30) {
+                weatherClass = 'Poor';
+              } else {
+                weatherClass = 'Terrible';
+              }
+              return (
                 <View key={index} style={styles.routeCard}>
-                  <Text style={styles.routeTitle}>Route {index + 1}</Text>
-                  <Text>Start Address: {JSON.stringify(route.startAddress)}</Text>
-                  <Text>
-                    Destination Address:{" "}
-                    {JSON.stringify(route.destinationAddress)}
+                  <Text style={styles.routeTitle}>
+                    {routeColors[index].charAt(0).toUpperCase() + routeColors[index].slice(1)} Route
                   </Text>
                   <Text>
-                    Time: {(route.durationSeconds / 60).toFixed(1)} minutes
+                    Time: {hours > 0 
+                      ? `${hours} hours ${minutes} min` 
+                      : `${minutes} min`}
                   </Text>
                   <Text>
-                    Distance: {(route.distanceMeters / 1000).toFixed(2)} km
+                    Distance: {(route.distanceMeters / 1609).toFixed(2)} mi
                   </Text>
                   <Text>
-                    Weather Score: {route.weather ?? "N/A"}
+                    Weather Score: {100 - Math.round(route.weather * 100)} %
+                  </Text>
+                  <Text>
+                    Weather Classification: {weatherClass}
                   </Text>
                 </View>
-              ))}
-            </ScrollView>
-          </View>
-        ) : (
-          !loading && <Text style={styles.noDataText}>No routes available</Text>
-        )}
+              );
+            })}
+          </ScrollView>
+        </View>
+      ) : (
+        !loading && <Text style={styles.noDataText}>No routes available</Text>
+      )}
+
       </ScrollView>
     </SafeAreaView>
   );

@@ -15,7 +15,7 @@ import LocationInput from "./locationInput";
 import { useRouter } from "expo-router";
 import MapView, { Marker, Polyline, Callout } from "react-native-maps";
 
-const baseUrl = Platform.OS === "ios" ? "http://129.161.136.89:3000" : "http://10.0.2.2:3000";
+const baseUrl = Platform.OS === "ios" ? "http://129.161.136.89:3000" : "http://129.161.139.185:3000";
 
 export default function Index() {
   const router = useRouter();
