@@ -16,7 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
-const baseUrl = Platform.OS === "ios" ? "http://localhost:3000" : "http://10.0.2.2:3000";
+const baseUrl = Platform.OS === "ios" ? "http://129.161.136.89:3000" : "http://10.0.2.2:3000";
 
 export default function ChangeStart() {
   const router = useRouter();
