@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   Button,
   ScrollView,
+  Platform
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Text } from "react-native-paper";
@@ -13,6 +14,8 @@ import "react-native-get-random-values";
 import LocationInput from "./locationInput";
 import { useRouter } from "expo-router";
 import MapView, { Marker, Polyline, Callout } from "react-native-maps";
+
+const baseUrl = Platform.OS === "ios" ? "http://129.161.136.89:3000" : "http://10.0.2.2:3000";
 
 export default function Index() {
   const router = useRouter();
@@ -83,7 +86,7 @@ export default function Index() {
     setLoading(true);
     try {
       const response = await axios.get(
-        `http://localhost:3000/api/routes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}`
+        `${baseUrl}/api/routes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}`
       );
       setApiResponse(response.data);
     } catch (error) {
