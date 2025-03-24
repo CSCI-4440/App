@@ -62,8 +62,10 @@ router.get("/api/changeStartRoutes", async (req, res) => {
         destinationAddress: r.destinationAddress,
         distanceMeters: r.distanceMeters,
         durationSeconds: r.durationSeconds,
-        waypoints: waypoints
+        waypoints: waypoints,
+        weather: await r.getPrecipitationPercent()
       });
+      console.log(routes)
     }
     const bestRoutes = Manager.getBestRoutes(routes);
     res.json({ routes: bestRoutes, mapData: routeDetails });

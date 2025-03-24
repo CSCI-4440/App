@@ -242,7 +242,7 @@ export default function ChangeStart() {
                     Distance: {(route.distanceMeters / 1000).toFixed(2)} km
                   </Text>
                   <Text>
-                    Weather Score: {route.weatherScore ?? "N/A"}
+                    Weather Score: {route.weather ?? "N/A"}
                   </Text>
                 </View>
               ))}

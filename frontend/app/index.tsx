@@ -221,7 +221,7 @@ export default function Index() {
                 <Text>
                   Distance: {(route.distanceMeters / 1000).toFixed(2)} km
                 </Text>
-                <Text>Weather Score: {route.weatherScore ?? "N/A"}</Text>
+                <Text>Weather Score: {route.getPrecipitationPercent ?? "N/A"}</Text>
               </View>
             ))}
           </View>

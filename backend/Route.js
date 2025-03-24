@@ -10,6 +10,7 @@ class Route {
       this.polyline = legs.polyline.encodedPolyline;
       this.legs = legs;
       this.locations = [];
+      this.weather = [];
    }
 
    get getPolyline() {
