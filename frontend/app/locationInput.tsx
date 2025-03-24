@@ -15,7 +15,7 @@ interface LocationInputProps {
 const LocationInput: React.FC<LocationInputProps> = ({ placeholder, setAddress, setLat, setLong, inputRef }) => {
   return (
     <View style={styles.autoCompleteContainer}>
-      <Paragraph>{placeholder}</Paragraph>
+      <Paragraph> Enter starting address </Paragraph>
       <GooglePlacesAutocomplete
         ref={inputRef}
         placeholder={placeholder}

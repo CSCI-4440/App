@@ -1,11 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Button, ActivityIndicator, ScrollView, StyleSheet, View } from "react-native";
+import { Button, ActivityIndicator, ScrollView, StyleSheet, View,Alert } from "react-native";
 import { Text } from "react-native-paper";
 import axios from "axios";
 import 'react-native-get-random-values';
 import LocationInput from "./locationInput";
 import MapView, { Marker, Polyline, Callout } from 'react-native-maps';
 import { Platform } from "react-native";
+import Config from '../config';
+import * as Location from "expo-location";
 
 const baseUrl = Platform.OS === "ios"
   ? "http://localhost:3000"
@@ -26,6 +28,52 @@ export default function Index() {
   const startInputRef = useRef<any>(null);
   const destinationInputRef = useRef<any>(null);
   const mapRef = useRef<MapView>(null);
+
+  const [location, setLocation] = useState<Location.LocationObject | null>(null);
+
+  const requestLocationPermission = async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Permission Denied", "Enable location permissions to continue.");
+      return false;
+    }
+    return true;
+  };
+
+  const getLocation = async () => {
+    const hasPermission = await requestLocationPermission();
+    if (!hasPermission) return;
+  
+    const position = await Location.getCurrentPositionAsync({});
+    setLocation(position);
+  
+    console.log("Coordinates:", position.coords.latitude, position.coords.longitude);
+  
+    await reverseGeocode(position.coords.latitude, position.coords.longitude);
+  };
+
+  const reverseGeocode = async (latitude: number, longitude: number) => {
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${Config.GOOGLE_API_KEY}`;
+
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+      if (data.status === "OK" && data.results.length > 0) {
+        setStartAddress(data.results[0].formatted_address);
+      } else {
+        Alert.alert("Error", "Failed to get address");
+      }
+    } catch (error) {
+      console.error("Geocoding Error:", error);
+      Alert.alert("Error", "Failed to fetch address");
+    }
+  };
+
+  useEffect(() => {
+    getLocation();
+  }, []);
+
+
 
   // An array of colors for each route. 
   // If you have more than 5 routes, it'll loop around.
@@ -135,7 +183,7 @@ export default function Index() {
       {/* Start Address Input */}
       <LocationInput
         key="start"
-        placeholder="Enter starting address"
+        placeholder={startAddress || "Enter starting address"}
         setAddress={setStartAddress}
         setLat={setStartLat}
         setLong={setStartLong}
