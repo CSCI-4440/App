@@ -1,26 +1,28 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
-  ScrollView,
   StyleSheet,
   ActivityIndicator,
   Button,
+  ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Text } from "react-native-paper";
-import { Ionicons } from "@expo/vector-icons";
 import axios from "axios";
 import "react-native-get-random-values";
 import LocationInput from "./locationInput";
 import { useRouter } from "expo-router";
+import MapView, { Marker, Polyline, Callout } from "react-native-maps";
 
 export default function Index() {
-  const router = useRouter();  
+  const router = useRouter();
   const [startAddress, setStartAddress] = useState("");
   const [destinationAddress, setDestinationAddress] = useState("");
 
-  const [startLat, setStartLat] = useState<number | null>(null);
-  const [startLong, setStartLong] = useState<number | null>(null);
+// Default start coordinates: Troy, NY
+  const [startLat, setStartLat] = useState<number | null>(42.7284117);
+  const [startLong, setStartLong] = useState<number | null>(-73.69178509999999);
+
   const [destinationLat, setDestinationLat] = useState<number | null>(null);
   const [destinationLong, setDestinationLong] = useState<number | null>(null);
 
@@ -29,6 +31,36 @@ export default function Index() {
 
   const startInputRef = useRef<any>(null);
   const destinationInputRef = useRef<any>(null);
+
+  // For route polylines
+  const routeColors = ["blue", "green", "orange", "red", "purple"];
+  const decodePolyline = (encoded: string) => {
+    let points = [];
+    let index = 0, lat = 0, lng = 0;
+    while (index < encoded.length) {
+      let b, shift = 0, result = 0;
+      do {
+        b = encoded.charCodeAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      const dlat = (result & 1) ? ~(result >> 1) : (result >> 1);
+      lat += dlat;
+      shift = 0;
+      result = 0;
+      do {
+        b = encoded.charCodeAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      const dlng = (result & 1) ? ~(result >> 1) : (result >> 1);
+      lng += dlng;
+      points.push({ latitude: lat / 1e5, longitude: lng / 1e5 });
+    }
+    return points;
+  };
+
+  const mapRef = useRef<MapView>(null);
 
   const clearOptions = () => {
     setStartAddress("");
@@ -61,19 +93,90 @@ export default function Index() {
     }
   };
 
+  // Auto-fit the map
+  useEffect(() => {
+    if (apiResponse?.mapData) {
+      let allCoordinates: { latitude: number; longitude: number }[] = [];
+      apiResponse.mapData.forEach((route: any) => {
+        if (route.polyline) {
+          const coords = decodePolyline(route.polyline);
+          allCoordinates = allCoordinates.concat(coords);
+        }
+      });
+      if (allCoordinates.length && mapRef.current) {
+        mapRef.current.fitToCoordinates(allCoordinates, {
+          edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
+          animated: true,
+        });
+      }
+    }
+  }, [apiResponse]);
+
   return (
     <SafeAreaView style={styles.safeArea}>
+
+      {/* MAP BACKGROUND (Touchable) */}
       <View style={styles.mapBackground}>
-        <Text style={styles.mapPlaceholderText}>Map Placeholder</Text>
+        <MapView
+          ref={mapRef}
+          style={StyleSheet.absoluteFillObject}
+          initialRegion={{
+            latitude: startLat || 42.7296,
+            longitude: startLong || -73.6779,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          }}
+        >
+          {apiResponse?.mapData?.map((route: any, index: number) => {
+            const color = routeColors[index] || "gray";
+            return (
+              <React.Fragment key={index}>
+                {route.polyline && (
+                  <Polyline
+                    coordinates={decodePolyline(route.polyline)}
+                    strokeWidth={4}
+                    strokeColor={color}
+                  />
+                )}
+                {route.start && (
+                  <Marker coordinate={route.start}>
+                    <Callout>
+                      <View>
+                        <Text style={{ fontWeight: "bold" }}>
+                          Route {index + 1} Start
+                        </Text>
+                        <Text>Time: {route.duration}</Text>
+                        <Text>Distance: {route.distance} m</Text>
+                      </View>
+                    </Callout>
+                  </Marker>
+                )}
+                {route.end && (
+                  <Marker coordinate={route.end}>
+                    <Callout>
+                      <View>
+                        <Text style={{ fontWeight: "bold" }}>
+                          Route {index + 1} End
+                        </Text>
+                        <Text>Time: {route.duration}</Text>
+                        <Text>Distance: {route.distance} m</Text>
+                      </View>
+                    </Callout>
+                  </Marker>
+                )}
+              </React.Fragment>
+            );
+          })}
+        </MapView>
       </View>
 
       <ScrollView
         style={styles.contentContainer}
         contentContainerStyle={styles.contentInner}
         keyboardShouldPersistTaps="always"
+        pointerEvents="none"  // <-- The map behind it will receive touches
       >
-        {/* Destination Input*/}
-        <View style={styles.searchContainer}>
+        <View style={styles.searchContainer} pointerEvents="auto">
           <LocationInput
             key="end"
             placeholder="Enter destination address"
@@ -84,7 +187,8 @@ export default function Index() {
           />
         </View>
 
-        <View style={styles.routeButtonRow}>
+        {/* Find & Clear Buttons */}
+        <View style={styles.routeButtonRow} pointerEvents="auto">
           <View style={{ flex: 1, marginRight: 5 }}>
             <Button title="Find Routes" onPress={getRoutes} color="#fff" />
           </View>
@@ -101,34 +205,39 @@ export default function Index() {
           />
         )}
 
-        {apiResponse && apiResponse.routes && apiResponse.routes.length > 0 ? (
+        {/* If we have routes, show them. Otherwise, show nothing. */}
+        {apiResponse?.routes && apiResponse.routes.length > 0 && (
           <View style={styles.routesContainer}>
             {apiResponse.routes.map((route: any, index: number) => (
               <View key={index} style={styles.routeCard}>
                 <Text style={styles.routeTitle}>Route {index + 1}</Text>
                 <Text>Start Address: {JSON.stringify(route.startAddress)}</Text>
                 <Text>
-                  Destination Address:{" "}
-                  {JSON.stringify(route.destinationAddress)}
+                  Destination Address: {JSON.stringify(route.destinationAddress)}
                 </Text>
-                <Text>Time: {(route.durationSeconds / 60).toFixed(1)} minutes</Text>
-                <Text>Distance: {(route.distanceMeters / 1000).toFixed(2)} km</Text>
+                <Text>
+                  Time: {(route.durationSeconds / 60).toFixed(1)} minutes
+                </Text>
+                <Text>
+                  Distance: {(route.distanceMeters / 1000).toFixed(2)} km
+                </Text>
                 <Text>Weather Score: {route.weatherScore ?? "N/A"}</Text>
               </View>
             ))}
           </View>
-        ) : (
-          !loading && <Text style={styles.noDataText}>No routes available</Text>
         )}
       </ScrollView>
 
-      {/*bottom info card */}
-      <View style={styles.fixedInfoContainer}>
+      <View style={styles.fixedInfoContainer} pointerEvents="auto">
         <View style={styles.infoCard}>
           <View style={styles.locationRow}>
             <Text style={styles.locationTitle}>Troy, NY</Text>
             <View style={styles.changeStartButton}>
-              <Button title="Change Start" onPress={() => {router.push("/changeStart");}} color="#fff" />
+              <Button
+                title="Change Start"
+                onPress={() => router.push("/changeStart")}
+                color="#fff"
+              />
             </View>
           </View>
           <Text style={styles.weatherInfo}>60° Mostly Clear</Text>
@@ -143,6 +252,7 @@ export default function Index() {
   );
 }
 
+// STYLES
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -150,15 +260,8 @@ const styles = StyleSheet.create({
   },
   mapBackground: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "#ccc",
-    alignItems: "center",
-    justifyContent: "center",
+    zIndex: 0,
   },
-  mapPlaceholderText: {
-    color: "#888",
-    fontWeight: "bold",
-  },
-
   contentContainer: {
     flex: 1,
     zIndex: 1,
@@ -168,7 +271,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 120,
   },
-
   searchContainer: {
     marginVertical: 10,
   },
@@ -179,7 +281,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#007bff",
     borderRadius: 12,
   },
-
   routesContainer: {
     marginBottom: 16,
   },
@@ -196,13 +297,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 5,
   },
-  noDataText: {
-    marginTop: 20,
-    fontSize: 14,
-    fontStyle: "italic",
-    textAlign: "center",
-  },
-
   fixedInfoContainer: {
     position: "absolute",
     bottom: 0,
