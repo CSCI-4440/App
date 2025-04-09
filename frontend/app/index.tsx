@@ -135,46 +135,47 @@ export default function Index() {
           longitudeDelta: 0.01,
         }}
       >
-        {apiResponse?.mapData?.map((route: any, index: number) => {
-          const color = routeColors[index] || "gray";
-          return (
-            <React.Fragment key={index}>
-              {route.polyline && (
-                <Polyline
-                  coordinates={decodePolyline(route.polyline)}
-                  strokeWidth={4}
-                  strokeColor={color}
-                />
-              )}
-              {route.start && (
-                <Marker coordinate={route.start}>
+      {apiResponse?.routes?.map((route: any, index: number) => {
+        const color = routeColors[index] || "gray";
+        return (
+          <React.Fragment key={index}>
+            {route.waypoints && (
+              <Polyline
+                coordinates={route.waypoints.map((point: any) => ({
+                  latitude: point.lat,
+                  longitude: point.lng,
+                }))}
+                strokeWidth={4}
+                strokeColor={color}
+              />
+            )}
+            {route.waypoints?.length > 0 && (
+              <>
+                <Marker
+                  coordinate={{
+                    latitude: route.waypoints[0].lat,
+                    longitude: route.waypoints[0].lng,
+                  }}
+                >
                   <Callout>
-                    <View>
-                      <Text style={{ fontWeight: "bold" }}>
-                        Route {index + 1} Start
-                      </Text>
-                      <Text>Time: {route.duration}</Text>
-                      <Text>Distance: {route.distance} m</Text>
-                    </View>
+                    <Text>Route {index + 1} Start</Text>
                   </Callout>
                 </Marker>
-              )}
-              {route.end && (
-                <Marker coordinate={route.end}>
+                <Marker
+                  coordinate={{
+                    latitude: route.waypoints[route.waypoints.length - 1].lat,
+                    longitude: route.waypoints[route.waypoints.length - 1].lng,
+                  }}
+                >
                   <Callout>
-                    <View>
-                      <Text style={{ fontWeight: "bold" }}>
-                        Route {index + 1} End
-                      </Text>
-                      <Text>Time: {route.duration}</Text>
-                      <Text>Distance: {route.distance} m</Text>
-                    </View>
+                    <Text>Route {index + 1} End</Text>
                   </Callout>
                 </Marker>
-              )}
-            </React.Fragment>
-          );
-        })}
+              </>
+            )}
+          </React.Fragment>
+        );
+      })}
       </MapView>
 
       {/* Floating UI Overlay */}
