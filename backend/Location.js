@@ -1,37 +1,50 @@
-const axios = require("axios"); 
+const fs = require("fs");
+const axios = require("axios");
 
-//define the Location class to represent a geographic location
-class Location {
-    constructor(lat, long) {
-        //store the latitude and longitude of the location
+class Location 
+{
+    constructor(lat, long) 
+    {
         this.latitude = lat;
         this.longitude = long;
-        //initialize weather condition as null (to be fetched later)
-        this.weatherCondition = null;
+        this.weather = null;
     }
-    //fetch the current weather condition from the OpenWeather API
-    async fetchWeather() {
-        console.log("Fetching weather condition...");
-        const API_KEY = process.env.OPENWEATHER_API_KEY; 
-        //construct the API request URL
+
+    async fetchWeather() 
+    {
+        console.log("Fetching weather data..."); 
+        const API_KEY = process.env.OPENWEATHER_API_KEY;
         const url = `https://api.openweathermap.org/data/2.5/weather?lat=${this.latitude}&lon=${this.longitude}&units=metric&appid=${API_KEY}`;
-        try {
-            //make the API call
+        try 
+        {
             const response = await axios.get(url);
-            //extract and store the weather condition description 
-            this.weatherCondition = response.data.weather[0].description;
-            //log the result
-            console.log(`Weather condition at (${this.latitude}, ${this.longitude}): ${this.weatherCondition}`);
-        } catch (error) {
-            //handle errors
-            console.error("Error fetching weather condition:", error.message);
+            this.weather = 
+            {
+                    temperature: response.data.main.temp,
+                    conditions: response.data.weather[0].description,
+                    weatherId: response.data.weather[0].id,
+                    windSpeed: response.data.wind.speed,
+                    visibility: response.data.visibility || null,
+            };
+            console.log(`Weather at (${this.latitude}, ${this.longitude}):`, this.weather);
+        } 
+        catch (error) 
+        {
+            console.error("Error fetching weather data:", error.message);
         }
     }
-    //getter method to retrieve the stored weather condition
-    getCondition() 
-    {
-        return this.weatherCondition;
+
+    isBadWeather() {
+        if (!this.weather) 
+            return false;
+        const { conditions, temperature, windSpeed, visibility, weatherId } = this.weather;
+        const badConditions = ["rain", "snow", "thunderstorm", "fog", "drizzle"];
+        const isBadCondition = badConditions.some(cond => conditions.toLowerCase().includes(cond));
+        const lowVisibility = visibility && visibility < 1000;
+        const highWinds = windSpeed > 10; 
+        const cold = temperature < 0 || temperature > 35;
+        return isBadCondition || lowVisibility || highWinds || cold;
     }
 }
-//export the Location class so it can be used in other files
+
 module.exports = Location;
