@@ -5,7 +5,10 @@ import {
   ActivityIndicator,
   Button,
   Platform,
-  SafeAreaView, Alert, ScrollView
+  SafeAreaView,
+  Alert,
+  ScrollView,
+  Animated,
 } from "react-native";
 import { Text } from "react-native-paper";
 import axios from "axios";
@@ -18,35 +21,42 @@ import { TouchableOpacity } from "react-native";
 import * as Location from "expo-location";
 import Config from "../config";
 
-// put the ip address here -- everyone (no other ip changes needed)
-const baseUrl = "http://192.168.1.161:3000"
+const baseUrl = "http://localhost:3000";
 
 export default function Index() {
   const router = useRouter();
   const [startAddress, setStartAddress] = useState("");
   const [destinationAddress, setDestinationAddress] = useState("");
-
   const [startLat, setStartLat] = useState<number | null>(42.7284117);
   const [startLong, setStartLong] = useState<number | null>(-73.69178509999999);
   const [destinationLat, setDestinationLat] = useState<number | null>(null);
   const [destinationLong, setDestinationLong] = useState<number | null>(null);
-
   const [apiResponse, setApiResponse] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(false);
-
   const startInputRef = useRef<any>(null);
   const destinationInputRef = useRef<any>(null);
-  
   const [selectedTime, setSelectedTime] = useState<Date>(new Date());
   const [showTimePicker, setShowTimePicker] = useState<boolean>(false);
 
   const today = new Date();
-  const formattedToday = today.toISOString().split('T')[0]; // "YYYY-MM-DD"
-
+  const formattedToday = today.toISOString().split("T")[0];
   const [selectedDate, setSelectedDate] = useState<string>(formattedToday);
   const mapRef = useRef<MapView>(null);
 
   const routeColors = ["blue", "green", "orange", "red", "purple"];
+
+  const [isChangingStart, setIsChangingStart] = useState(false);
+  const slideAnim = useRef(new Animated.Value(0)).current;
+
+  const toggleChangeStart = () => {
+    const toValue = isChangingStart ? 0 : 1;
+    Animated.timing(slideAnim, {
+      toValue,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
+    setIsChangingStart(!isChangingStart);
+  };  
 
   const decodePolyline = (encoded: string) => {
     let points = [];
@@ -90,22 +100,20 @@ export default function Index() {
   };
 
   const requestLocationPermission = async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert("Permission Denied", "Enable location permissions to continue.");
-        return false;
-      }
-      return true;
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Permission Denied", "Enable location permissions to continue.");
+      return false;
+    }
+    return true;
   };
 
   const reverseGeocode = async (latitude: number, longitude: number) => {
     const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${Config.GOOGLE_API_KEY}`;
-
     try {
       const response = await fetch(url);
       const data = await response.json();
       if (data.status === "OK" && data.results.length > 0) {
-        console.log(data.results[0].formatted_address)
         setStartAddress(data.results[0].formatted_address);
       } else {
         Alert.alert("Error", "Failed to get address");
@@ -115,18 +123,14 @@ export default function Index() {
       Alert.alert("Error", "Failed to fetch address");
     }
   };
-  
+
   const getLocation = async () => {
     const hasPermission = await requestLocationPermission();
     if (!hasPermission) return;
-  
+
     const position = await Location.getCurrentPositionAsync({});
     setStartLat(position.coords.latitude);
     setStartLong(position.coords.longitude);
-  
-    console.log("Coordinates:", position.coords.latitude, position.coords.longitude);
-    
-    console.log("Google API called");
     await reverseGeocode(position.coords.latitude, position.coords.longitude);
   };
 
@@ -137,31 +141,22 @@ export default function Index() {
     }
     setLoading(true);
     try {
-      console.log("Start Coords:", startLat, startLong);
-      console.log("Destination Coords:", destinationLat, destinationLong);
-
-      try {
-        const response = await axios.get(
-          `${baseUrl}/api/changeStartRoutes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}&date=${selectedDate}&time=${selectedTime}`
-        );
-        setApiResponse(response.data);
-      } catch (error) {
-        console.error("Error fetching route data:", error);
-        setApiResponse(null);
-      }
-
+      const response = await axios.get(
+        `${baseUrl}/api/changeStartRoutes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}&date=${selectedDate}&time=${selectedTime}`
+      );
+      setApiResponse(response.data);
     } catch (error) {
       console.error("Error fetching route data:", error);
+      setApiResponse(null);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-      getLocation();
-    }, []);
+    getLocation();
+  }, []);
 
-  // Auto-fit the map to include all coordinates from the routes.
   useEffect(() => {
     if (apiResponse?.mapData) {
       let allCoordinates: { latitude: number; longitude: number }[] = [];
@@ -182,7 +177,6 @@ export default function Index() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* Map Layer */}
       <MapView
         ref={mapRef}
         style={StyleSheet.absoluteFillObject}
@@ -193,71 +187,92 @@ export default function Index() {
           longitudeDelta: 0.01,
         }}
       >
-      {apiResponse?.mapData?.map((route: any, index: number) => {
-            const polylineColor = routeColors[index] || "gray";
-            return (
-              <React.Fragment key={index}>
-                {route.polyline && (
-                  <Polyline
-                    coordinates={decodePolyline(route.polyline)}
-                    strokeWidth={4}
-                    strokeColor={polylineColor}
-                  />
-                )}
-                {route.start && (
-                  <Marker coordinate={route.start}>
-                    <Callout>
-                      <View>
-                        <Text style={{ fontWeight: "bold" }}>
-                          Route {index + 1} Start
-                        </Text>
-                        <Text>Time: {route.duration}</Text>
-                        <Text>Distance: {route.distance} m</Text>
-                      </View>
-                    </Callout>
-                  </Marker>
-                )}
-                {route.end && (
-                  <Marker coordinate={route.end}>
-                    <Callout>
-                      <View>
-                        <Text style={{ fontWeight: "bold" }}>
-                          Route {index + 1} End
-                        </Text>
-                        <Text>Time: {route.duration}</Text>
-                        <Text>Distance: {route.distance} m</Text>
-                      </View>
-                    </Callout>
-                  </Marker>
-                )}
-              </React.Fragment>
-            );
-          })}
-        </MapView>
+        {apiResponse?.mapData?.map((route: any, index: number) => {
+          const polylineColor = routeColors[index] || "gray";
+          return (
+            <React.Fragment key={index}>
+              {route.polyline && (
+                <Polyline
+                  coordinates={decodePolyline(route.polyline)}
+                  strokeWidth={4}
+                  strokeColor={polylineColor}
+                />
+              )}
+              {route.start && (
+                <Marker coordinate={route.start}>
+                  <Callout>
+                    <View>
+                      <Text style={{ fontWeight: "bold" }}>
+                        Route {index + 1} Start
+                      </Text>
+                      <Text>Time: {route.duration}</Text>
+                      <Text>Distance: {route.distance} m</Text>
+                    </View>
+                  </Callout>
+                </Marker>
+              )}
+              {route.end && (
+                <Marker coordinate={route.end}>
+                  <Callout>
+                    <View>
+                      <Text style={{ fontWeight: "bold" }}>
+                        Route {index + 1} End
+                      </Text>
+                      <Text>Time: {route.duration}</Text>
+                      <Text>Distance: {route.distance} m</Text>
+                    </View>
+                  </Callout>
+                </Marker>
+              )}
+            </React.Fragment>
+          );
+        })}
+      </MapView>
 
-      {/* Floating UI Overlay */}
       <View style={styles.overlayContainer} pointerEvents="box-none">
+        <View style={styles.inputsContainer}>
+          {/** START ADDRESS */}
+          <Animated.View
+            style={{
+              opacity: slideAnim,
+              transform: [
+                {
+                  scaleY: slideAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, 1],
+                  }),
+                },
+              ],
+              height: slideAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, 115],
+              }),
+              overflow: "hidden",
+            }}
+          >
+            <View style={styles.inputWrapper}>
+              <LocationInput
+                placeholder={startAddress || "Enter starting address"}
+                setAddress={setStartAddress}
+                setLat={setStartLat}
+                setLong={setStartLong}
+                inputRef={startInputRef}
+                header=""
+              />
+            </View>
+          </Animated.View>
 
-      <View style={styles.inputWrapper}>
-          <LocationInput
-            placeholder={startAddress || "Enter starting address"}
-            setAddress={setStartAddress}
-            setLat={setStartLat}
-            setLong={setStartLong}
-            inputRef={startInputRef}
-            header=""
-          />
-        </View>
-        
-        <View style={styles.inputWrapper}>
-          <LocationInput
-            placeholder="Enter destination address"
-            setAddress={setDestinationAddress}
-            setLat={setDestinationLat}
-            setLong={setDestinationLong}
-            inputRef={destinationInputRef}
-            header=""
-          />
+          {/** DESTINATION ADDRESS */}
+          <View style={styles.inputWrapper}>
+            <LocationInput
+              placeholder="Enter destination address"
+              setAddress={setDestinationAddress}
+              setLat={setDestinationLat}
+              setLong={setDestinationLong}
+              inputRef={destinationInputRef}
+              header=""
+            />
+          </View>
         </View>
 
         <View style={styles.routeButtonRow}>
@@ -270,26 +285,26 @@ export default function Index() {
         </View>
       </View>
 
-      {/* Bottom Fixed Info Card */}
       <View style={styles.fixedInfoContainer} pointerEvents="box-none">
         <View style={styles.infoCard}>
           <View style={styles.locationRow}>
             <Text style={styles.locationTitle}>Troy, NY</Text>
-            <View style={styles.changeStartButton}>
+            <View style={[styles.changeStartButton, { width: 150 }]}>
               <Button
-                title="Change Start"
-                onPress={() => router.push("/changeStart")}
+                title={isChangingStart ? "Cancel" : "Change Start"}
+                onPress={toggleChangeStart}
                 color="#fff"
               />
             </View>
 
             <View style={styles.changeStartButton}>
-            <Button
-              title="Change Time"
-              onPress={() => setShowTimePicker(true)}
-              color="#fff"
-            />
+              <Button
+                title="Change Time"
+                onPress={() => setShowTimePicker(true)}
+                color="#fff"
+              />
             </View>
+
           </View>
           <Text style={styles.weatherInfo}>60° Mostly Clear</Text>
           <Text style={styles.alertTitle}>Severe Weather Alerts</Text>
@@ -303,52 +318,53 @@ export default function Index() {
           </View>
         </View>
 
-        {/* DATA DISPLAY THING */}
         {apiResponse?.routes?.length > 0 && (
-        <View style={styles.routeScrollWrapper}>
-          <ScrollView>
-            {apiResponse.routes.map((route: any, index: number) => (
-              <View key={index} style={styles.routeCard}>
-                <Text style={styles.routeTitle}>
-                  {routeColors[index % routeColors.length].charAt(0).toUpperCase() +
-                    routeColors[index % routeColors.length].slice(1)} Route
-                </Text>
-                <Text>
-                  {JSON.stringify(
-                    route,
-                    (key, value) => (key === "polyline" ? undefined : value),
-                    2
-                  )}
-                </Text>
-              </View>
-            ))}
-          </ScrollView>
-        </View>
-      )}
-
+          <View style={styles.routeScrollWrapper}>
+            <ScrollView>
+              {apiResponse.routes.map((route: any, index: number) => (
+                <View key={index} style={styles.routeCard}>
+                  <Text style={styles.routeTitle}>
+                    {routeColors[index % routeColors.length]
+                      .charAt(0)
+                      .toUpperCase() +
+                      routeColors[index % routeColors.length].slice(1)}{" "}
+                    Route
+                  </Text>
+                  <Text>
+                    {JSON.stringify(
+                      route,
+                      (key, value) => (key === "polyline" ? undefined : value),
+                      2
+                    )}
+                  </Text>
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        )}
       </View>
-    
+
       <DateTimeSelector
         visible={showTimePicker}
         onClose={() => setShowTimePicker(false)}
         onConfirm={(date, time) => {
-          console.log("Selected date:", date);
-          console.log("Selected time:", time.toLocaleTimeString());
           setSelectedDate(date);
           setSelectedTime(time);
           setShowTimePicker(false);
-      }}
-    />
-
+        }}
+      />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  routeScrollWrapper: {
-    maxHeight: 200,      // 👈 fixed height
-    marginTop: 10,
+  inputsContainer: {
+    flexDirection: "column",
   },  
+  routeScrollWrapper: {
+    maxHeight: 200,
+    marginTop: 10,
+  },
   safeArea: {
     flex: 1,
     backgroundColor: "#fff",
@@ -366,7 +382,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 10,
     elevation: 3,
-  },  
+  },
   routeButtonRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -451,5 +467,4 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
   },
-  
 });
