@@ -20,8 +20,8 @@ app.get("/test", async (req, res) => {
 
 app.get("/api/routes", async (req, res) => {
     console.log("Calling the API!");
-    const { startLat, startLong, destinationLat, destinationLong } = req.query;
-    if (!startLat || !startLong || !destinationLat || !destinationLong) {
+    const { startLat, startLong, destinationLat, destinationLong, startDate, startTime} = req.query;
+    if (!startLat || !startLong || !destinationLat || !destinationLong || !startDate || !startTime) {
         return res.status(400).json({ error: "Missing required parameters" });
     }
     const url = "https://routes.googleapis.com/directions/v2:computeRoutes";
@@ -44,7 +44,7 @@ app.get("/api/routes", async (req, res) => {
         for (const route of responseRoutes) 
         {
             const legs = route.legs[0];
-            const r = new Route(legs);
+            const r = new Route(legs, startDate, startTime);
             const waypoints = await r.getWaypointsEveryXMeters(); 
             routes.push({
                 startAddress: r.startAddress,
@@ -54,7 +54,7 @@ app.get("/api/routes", async (req, res) => {
                 waypoints: waypoints
             });
         }
-        const bestRoutes = Manager.getBestRoutes(routes);
+        const bestRoutes = Manager.getBestRoute(routes);
         res.json({ routes: bestRoutes });
     } catch (error) {
         console.error("Error fetching route data:", error.message);

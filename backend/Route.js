@@ -59,14 +59,17 @@ const WEATHER_SCORES = {
 };
 
 class Route {
-  constructor(legs) {
+  constructor(legs, startDate, startTime) {
     this.startAddress = legs.startLocation.latLng;
     this.destinationAddress = legs.endLocation.latLng;
     this.distance = legs.distanceMeters;
+    this.startDate = startDate;
+    this.startTime = startTime;
     this.time = parseInt(legs.duration.replace("s", ""));
     this.polyline = legs.polyline.encodedPolyline;
     this.legs = legs;
     this.locations = [];
+    this.times = [];
     this.weatherScore = 0;
     this.weatherType = null; // Will be set to the worst weather condition description
   }
@@ -79,11 +82,32 @@ class Route {
     return this.startAddress;
   }
 
+  getTimes()
+  {
+    //for converting to unix time but for now i will just use current time
+    // const date = new Date('2025-04-11T10:00:00'); // Local time
+    // const unixTime = Math.floor(date.getTime() / 1000);
+    let lastLocTimeUnix = 1744223447;
+    let intervalTime = this.time / (this.legs.steps).size();
+    for (let i = 0; i < (this.legs.steps).size(); i++)
+    {
+      this.times.push(lastLocTimeUnix+intervalTime);
+    }
+  }
+
   getWaypointsEveryXMeters(intervalMeters = 40233) {
     if (this.distance < intervalMeters) {
       intervalMeters = this.distance / 2;
     }
 
+    //for converting to unix time but for now i will just use current time
+    // const date = new Date('2025-04-11T10:00:00'); // Local time
+    // const unixTime = Math.floor(date.getTime() / 1000);
+    let lastLocTimeUnix = 1744223447;
+    let intervalTime = this.time / (this.legs.steps).size();
+
+
+    // console.log(`DEPART TIMEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE ${this.departTimeUnix}`);
     let accumulatedDistance = 0;
 
     for (let step of this.legs.steps) {
@@ -107,7 +131,11 @@ class Route {
 
         let newLat = start.latitude + ratio * (end.latitude - start.latitude);
         let newLong = start.longitude + ratio * (end.longitude - start.longitude);
-        this.locations.push(new Location(newLat, newLong));
+
+        let timeAtLocation = lastLocTimeUnix+intervalTime;
+        lastLocTimeUnix = timeAtLocation;
+        this.times.push(timeAtLocation);
+        this.locations.push(new Location(newLat, newLong, timeAtLocation));
 
         // Reset for next interval
         accumulatedDistance = 0;
@@ -175,6 +203,12 @@ class Route {
 
     return conditionPercentages;
   }
+}
+
+
+getPercentAfterSunset()
+{
+  
 }
 
 module.exports = Route;

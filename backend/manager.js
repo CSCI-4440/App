@@ -76,6 +76,7 @@ class Manager {
     console.log("Weather Type:", bestRoute.weatherType);
     console.log("Score:", bestRoute.score);
     console.log("Polyline:", bestRoute.polyline);
+    console.log("Start Time: ", bestRoute.departTimeUnix);
 
     // Log the weather breakdown if it's available.
     if (bestRoute.weatherBreakdown) {

@@ -19,7 +19,7 @@ import { useRouter } from "expo-router";
 import * as Location from "expo-location";
 import Config from "../config";
 
-const baseUrl = Platform.OS === "ios" ? "http://129.161.77.35:3000" : "http://129.161.77.35:3000";
+const baseUrl = Platform.OS === "ios" ? "http://129.161.138.214:3000" : "http://129.161.138.214:3000";
 
 export default function ChangeStart() {
   const router = useRouter();
@@ -131,6 +131,7 @@ export default function ChangeStart() {
   const getRoutes = async () => {
     console.log("Start Address:", startAddress);
     console.log("Destination Address:", destinationAddress);
+    console.log("De")
 
     if (!startLat || !startLong || !destinationLat || !destinationLong) {
       alert("Please select valid addresses before searching for routes.");

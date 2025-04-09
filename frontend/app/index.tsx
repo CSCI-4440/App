@@ -16,10 +16,12 @@ import MapView, { Marker, Polyline, Callout } from "react-native-maps";
 import DateTimeSelector from "./DateTimeSelector";
 import { TouchableOpacity } from "react-native";
 import * as Location from "expo-location";
-import Config from "../config";
 
-// put the ip address here -- everyone (no other ip changes needed)
-const baseUrl = "http://192.168.1.161:3000"
+
+const baseUrl =
+  Platform.OS === "ios"
+    ? "http://129.161.138.214:3000"
+    : "http://129.161.138.214:3000";
 
 export default function Index() {
   const router = useRouter();
