@@ -4,11 +4,9 @@ import {
   StyleSheet,
   ActivityIndicator,
   Button,
-  ScrollView,
   Platform,
-  Alert
+  SafeAreaView,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { Text } from "react-native-paper";
 import axios from "axios";
 import "react-native-get-random-values";
@@ -16,19 +14,22 @@ import LocationInput from "./locationInput";
 import { useRouter } from "expo-router";
 import MapView, { Marker, Polyline, Callout } from "react-native-maps";
 import DateTimeSelector from "./DateTimeSelector";
+import { TouchableOpacity } from "react-native";
+import * as Location from "expo-location";
 
 
-const baseUrl = Platform.OS === "ios" ? "http://129.161.136.89:3000" : "http://129.161.139.185:3000";
+const baseUrl =
+  Platform.OS === "ios"
+    ? "http://129.161.76.78:3000"
+    : "http://129.161.76.78:3000";
 
 export default function Index() {
   const router = useRouter();
   const [startAddress, setStartAddress] = useState("");
   const [destinationAddress, setDestinationAddress] = useState("");
 
-// Default start coordinates: Troy, NY
   const [startLat, setStartLat] = useState<number | null>(42.7284117);
   const [startLong, setStartLong] = useState<number | null>(-73.69178509999999);
-
   const [destinationLat, setDestinationLat] = useState<number | null>(null);
   const [destinationLong, setDestinationLong] = useState<number | null>(null);
 
@@ -44,18 +45,16 @@ export default function Index() {
   const today = new Date();
   const formattedToday = today.toISOString().split('T')[0]; // "YYYY-MM-DD"
 
-const [selectedDate, setSelectedDate] = useState<string>(formattedToday);
+  const [selectedDate, setSelectedDate] = useState<string>(formattedToday);
+  const mapRef = useRef<MapView>(null);
 
-
-
-
-
-
-  // For route polylines
   const routeColors = ["blue", "green", "orange", "red", "purple"];
+
   const decodePolyline = (encoded: string) => {
     let points = [];
-    let index = 0, lat = 0, lng = 0;
+    let index = 0,
+      lat = 0,
+      lng = 0;
     while (index < encoded.length) {
       let b, shift = 0, result = 0;
       do {
@@ -63,7 +62,7 @@ const [selectedDate, setSelectedDate] = useState<string>(formattedToday);
         result |= (b & 0x1f) << shift;
         shift += 5;
       } while (b >= 0x20);
-      const dlat = (result & 1) ? ~(result >> 1) : (result >> 1);
+      const dlat = (result & 1) ? ~(result >> 1) : result >> 1;
       lat += dlat;
       shift = 0;
       result = 0;
@@ -72,14 +71,12 @@ const [selectedDate, setSelectedDate] = useState<string>(formattedToday);
         result |= (b & 0x1f) << shift;
         shift += 5;
       } while (b >= 0x20);
-      const dlng = (result & 1) ? ~(result >> 1) : (result >> 1);
+      const dlng = (result & 1) ? ~(result >> 1) : result >> 1;
       lng += dlng;
       points.push({ latitude: lat / 1e5, longitude: lng / 1e5 });
     }
     return points;
   };
-
-  const mapRef = useRef<MapView>(null);
 
   const clearOptions = () => {
     setStartAddress("");
@@ -101,9 +98,13 @@ const [selectedDate, setSelectedDate] = useState<string>(formattedToday);
     }
     setLoading(true);
     try {
+      console.log("Start Coords:", startLat, startLong);
+      console.log("Destination Coords:", destinationLat, destinationLong);
+      console.log("Sending request to Google Directions API...");
       const response = await axios.get(
-        `${baseUrl}/api/routes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}&date=${selectedDate}&time=${selectedTime}`
+        `${baseUrl}/api/routes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}&date=${selectedDate}&time
       );
+      console.log("Received response from Google Directions API");
       setApiResponse(response.data);
     } catch (error) {
       console.error("Error fetching route data:", error);
@@ -112,7 +113,6 @@ const [selectedDate, setSelectedDate] = useState<string>(formattedToday);
     }
   };
 
-  // Auto-fit the map
   useEffect(() => {
     if (apiResponse?.mapData) {
       let allCoordinates: { latitude: number; longitude: number }[] = [];
@@ -133,72 +133,64 @@ const [selectedDate, setSelectedDate] = useState<string>(formattedToday);
 
   return (
     <SafeAreaView style={styles.safeArea}>
-
-      {/* MAP BACKGROUND (Touchable) */}
-      <View style={styles.mapBackground}>
-        <MapView
-          ref={mapRef}
-          style={StyleSheet.absoluteFillObject}
-          initialRegion={{
-            latitude: startLat || 42.7296,
-            longitude: startLong || -73.6779,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
-          }}
-        >
-          {apiResponse?.mapData?.map((route: any, index: number) => {
-            const color = routeColors[index] || "gray";
-            return (
-              <React.Fragment key={index}>
-                {route.polyline && (
-                  <Polyline
-                    coordinates={decodePolyline(route.polyline)}
-                    strokeWidth={4}
-                    strokeColor={color}
-                  />
-                )}
-                {route.start && (
-                  <Marker coordinate={route.start}>
-                    <Callout>
-                      <View>
-                        <Text style={{ fontWeight: "bold" }}>
-                          Route {index + 1} Start
-                        </Text>
-                        <Text>Time: {route.duration}</Text>
-                        <Text>Distance: {route.distance} m</Text>
-                      </View>
-                    </Callout>
-                  </Marker>
-                )}
-                {route.end && (
-                  <Marker coordinate={route.end}>
-                    <Callout>
-                      <View>
-                        <Text style={{ fontWeight: "bold" }}>
-                          Route {index + 1} End
-                        </Text>
-                        <Text>Time: {route.duration}</Text>
-                        <Text>Distance: {route.distance} m</Text>
-                      </View>
-                    </Callout>
-                  </Marker>
-                )}
-              </React.Fragment>
-            );
-          })}
-        </MapView>
-      </View>
-
-      <ScrollView
-        style={styles.contentContainer}
-        contentContainerStyle={styles.contentInner}
-        keyboardShouldPersistTaps="always"
-        pointerEvents="none"  // <-- The map behind it will receive touches
+      {/* Map Layer */}
+      <MapView
+        ref={mapRef}
+        style={StyleSheet.absoluteFillObject}
+        initialRegion={{
+          latitude: startLat || 42.7296,
+          longitude: startLong || -73.6779,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        }}
       >
-        <View style={styles.searchContainer} pointerEvents="auto">
+      {apiResponse?.routes?.map((route: any, index: number) => {
+        const color = routeColors[index] || "gray";
+        return (
+          <React.Fragment key={index}>
+            {route.waypoints && (
+              <Polyline
+                coordinates={route.waypoints.map((point: any) => ({
+                  latitude: point.lat,
+                  longitude: point.lng,
+                }))}
+                strokeWidth={4}
+                strokeColor={color}
+              />
+            )}
+            {route.waypoints?.length > 0 && (
+              <>
+                <Marker
+                  coordinate={{
+                    latitude: route.waypoints[0].lat,
+                    longitude: route.waypoints[0].lng,
+                  }}
+                >
+                  <Callout>
+                    <Text>Route {index + 1} Start</Text>
+                  </Callout>
+                </Marker>
+                <Marker
+                  coordinate={{
+                    latitude: route.waypoints[route.waypoints.length - 1].lat,
+                    longitude: route.waypoints[route.waypoints.length - 1].lng,
+                  }}
+                >
+                  <Callout>
+                    <Text>Route {index + 1} End</Text>
+                  </Callout>
+                </Marker>
+              </>
+            )}
+          </React.Fragment>
+        );
+      })}
+      </MapView>
+
+      {/* Floating UI Overlay */}
+      <View style={styles.overlayContainer} pointerEvents="box-none">
+        <View style={styles.inputWrapper}>
           <LocationInput
-            key="end"
-            header="Enter destination address"
             placeholder="Enter destination address"
             setAddress={setDestinationAddress}
             setLat={setDestinationLat}
@@ -207,48 +199,36 @@ const [selectedDate, setSelectedDate] = useState<string>(formattedToday);
           />
         </View>
 
-        {/* Find & Clear Buttons */}
-        <View style={styles.routeButtonRow} pointerEvents="auto">
-          <View style={{ flex: 1, marginRight: 5 }}>
-            <Button title="Find Routes" onPress={getRoutes} color="#fff" />
-          </View>
-          <View style={{ flex: 1, marginLeft: 5 }}>
-            <Button title="Clear Choices" onPress={clearOptions} color="#fff" />
-          </View>
+        <View style={styles.routeButtonRow}>
+          <TouchableOpacity style={styles.button} onPress={getRoutes}>
+            <Text style={styles.buttonText}>Find Routes</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={clearOptions}>
+            <Text style={styles.buttonText}>Clear</Text>
+          </TouchableOpacity>
         </View>
 
-        {loading && (
-          <ActivityIndicator
-            size="large"
-            color="#0000ff"
-            style={{ marginVertical: 20 }}
-          />
-        )}
 
-        {/* If we have routes, show them. Otherwise, show nothing. */}
+        {loading && <ActivityIndicator size="large" color="#0000ff" style={{ marginTop: 10 }} />}
+
         {apiResponse?.routes && apiResponse.routes.length > 0 && (
           <View style={styles.routesContainer}>
             {apiResponse.routes.map((route: any, index: number) => (
               <View key={index} style={styles.routeCard}>
                 <Text style={styles.routeTitle}>Route {index + 1}</Text>
                 <Text>Start Address: {JSON.stringify(route.startAddress)}</Text>
-                <Text>
-                  Destination Address: {JSON.stringify(route.destinationAddress)}
-                </Text>
-                <Text>
-                  Time: {(route.durationSeconds / 60).toFixed(1)} minutes
-                </Text>
-                <Text>
-                  Distance: {(route.distanceMeters / 1000).toFixed(2)} km
-                </Text>
+                <Text>Destination: {JSON.stringify(route.destinationAddress)}</Text>
+                <Text>Time: {(route.durationSeconds / 60).toFixed(1)} minutes</Text>
+                <Text>Distance: {(route.distanceMeters / 1000).toFixed(2)} km</Text>
                 <Text>Weather Score: {route.getPrecipitationPercent ?? "N/A"}</Text>
               </View>
             ))}
           </View>
         )}
-      </ScrollView>
+      </View>
 
-      <View style={styles.fixedInfoContainer} pointerEvents="auto">
+      {/* Bottom Fixed Info Card */}
+      <View style={styles.fixedInfoContainer} pointerEvents="box-none">
         <View style={styles.infoCard}>
           <View style={styles.locationRow}>
             <Text style={styles.locationTitle}>Troy, NY</Text>
@@ -272,7 +252,11 @@ const [selectedDate, setSelectedDate] = useState<string>(formattedToday);
           <Text style={styles.alertTitle}>Severe Weather Alerts</Text>
           <Text style={styles.alertSubtitle}>Wind Advisory, Troy, NY</Text>
           <View style={styles.weatherAlertsButton}>
-            <Button title="Weather Alerts" onPress={() => {}} color="#fff" />
+            <Button
+              title="Weather Alerts"
+              onPress={() => router.push("/settings")}
+              color="#fff"
+            />
           </View>
         </View>
       </View>
@@ -292,37 +276,35 @@ const [selectedDate, setSelectedDate] = useState<string>(formattedToday);
   );
 }
 
-// STYLES
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: "#fff",
   },
-  mapBackground: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 0,
-  },
-  contentContainer: {
-    flex: 1,
+  overlayContainer: {
+    position: "absolute",
+    top: 40,
+    left: 16,
+    right: 16,
     zIndex: 1,
   },
-  contentInner: {
-    paddingTop: 0,
-    paddingHorizontal: 16,
-    paddingBottom: 120,
-  },
-  searchContainer: {
-    marginVertical: 10,
-  },
+  inputWrapper: {
+    backgroundColor: "transparent",
+    padding: 10,
+    borderRadius: 10,
+    marginBottom: 10,
+    elevation: 3,
+  },  
   routeButtonRow: {
     flexDirection: "row",
-    marginBottom: 16,
-    padding: 10,
+    justifyContent: "space-between",
+    marginBottom: 10,
     backgroundColor: "#007bff",
-    borderRadius: 12,
+    borderRadius: 10,
+    padding: 10,
   },
   routesContainer: {
-    marginBottom: 16,
+    marginTop: 10,
   },
   routeCard: {
     backgroundColor: "#fff",
@@ -330,7 +312,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 8,
     padding: 15,
-    marginBottom: 15,
+    marginBottom: 10,
   },
   routeTitle: {
     fontSize: 16,
@@ -358,7 +340,6 @@ const styles = StyleSheet.create({
   locationTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 4,
   },
   weatherInfo: {
     fontSize: 16,
@@ -385,4 +366,18 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     marginTop: 8,
   },
+  button: {
+    flex: 1,
+    backgroundColor: "#007bff",
+    paddingVertical: 10,
+    marginHorizontal: 5,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  
 });

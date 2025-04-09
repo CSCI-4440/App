@@ -19,7 +19,7 @@ import { useRouter } from "expo-router";
 import * as Location from "expo-location";
 import Config from "../config";
 
-const baseUrl = Platform.OS === "ios" ? "http://129.161.136.89:3000" : "http://129.161.139.185:3000";
+const baseUrl = Platform.OS === "ios" ? "http://129.161.77.35:3000" : "http://129.161.77.35:3000";
 
 export default function ChangeStart() {
   const router = useRouter();
@@ -41,7 +41,6 @@ export default function ChangeStart() {
 
   // Colors for drawing routes.
   const routeColors = ["blue", "green", "orange", "red", "purple"];
-
 
   const requestLocationPermission = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
@@ -145,6 +144,10 @@ export default function ChangeStart() {
       );
       // Assume the backend returns both routes and mapData.
       setApiResponse(response.data);
+
+      console.log("data::::: ")
+      console.log(apiResponse)
+
     } catch (error) {
       console.error("Error fetching route data (Change Start):", error);
     } finally {
@@ -275,52 +278,59 @@ export default function ChangeStart() {
           })}
         </MapView>
 
-        {apiResponse && apiResponse.routes && apiResponse.routes.length > 0 ? (
-        <View style={styles.routesContainer}>
-          <ScrollView style={styles.routesScroll}>
-            {apiResponse.routes.map((route: any, index: number) => {
-              const hours = Math.floor(route.durationSeconds / 3600);
-              const minutes = Math.floor((route.durationSeconds % 3600) / 60);
-              let weatherClass = '';
-              const weatherScore = 100 - Math.round(route.weather * 100);
-              if (weatherScore >= 90) {
-                weatherClass = 'Great';
-              } else if (weatherScore >= 70) {
-                weatherClass = 'Good';
-              } else if (weatherScore >= 50) {
-                weatherClass = 'Fair';
-              } else if (weatherScore >= 30) {
-                weatherClass = 'Poor';
-              } else {
-                weatherClass = 'Terrible';
-              }
-              return (
-                <View key={index} style={styles.routeCard}>
-                  <Text style={styles.routeTitle}>
-                    {routeColors[index].charAt(0).toUpperCase() + routeColors[index].slice(1)} Route
-                  </Text>
-                  <Text>
-                    Time: {hours > 0 
-                      ? `${hours} hours ${minutes} min` 
-                      : `${minutes} min`}
-                  </Text>
-                  <Text>
-                    Distance: {(route.distanceMeters / 1609).toFixed(2)} mi
-                  </Text>
-                  <Text>
-                    Weather Score: {100 - Math.round(route.weather * 100)} %
-                  </Text>
-                  <Text>
-                    Weather Classification: {weatherClass}
-                  </Text>
-                </View>
-              );
-            })}
-          </ScrollView>
-        </View>
-      ) : (
-        !loading && <Text style={styles.noDataText}>No routes available</Text>
-      )}
+        {apiResponse && apiResponse.mapData && apiResponse.mapData.length > 0 ? (
+  <View style={styles.routesContainer}>
+    <ScrollView style={styles.routesScroll}>
+      {apiResponse.mapData.map((route: any, index: number) => {
+        const hours = Math.floor(route.duration / 3600);
+        const minutes = Math.floor((route.duration % 3600) / 60);
+
+        let weatherClass = '';
+        const weatherScore = 100 - Math.round(route.weatherScore * 100);
+        if (weatherScore >= 90) {
+          weatherClass = 'Great';
+        } else if (weatherScore >= 70) {
+          weatherClass = 'Good';
+        } else if (weatherScore >= 50) {
+          weatherClass = 'Fair';
+        } else if (weatherScore >= 30) {
+          weatherClass = 'Poor';
+        } else {
+          weatherClass = 'Terrible';
+        }
+
+        return (
+          <View key={index} style={styles.routeCard}>
+            <Text style={styles.routeTitle}>
+              {routeColors[index % routeColors.length].charAt(0).toUpperCase() + routeColors[index % routeColors.length].slice(1)} Route
+            </Text>
+            {/* <Text>Start: {route.startAddress}</Text>
+            <Text>Destination: {route.destinationAddress}</Text>
+            <Text>
+              Time: {hours > 0 ? `${hours} hrs ${minutes} min` : `${minutes} min`}
+            </Text>
+            <Text>Distance: {(route.distance / 1609).toFixed(2)} mi</Text>
+            <Text>Weather Type: {route.weatherType}</Text>
+            <Text>Weather Score: {route.weatherScore} / 5</Text> */}
+
+            <Text>
+              {JSON.stringify(route, (key, value) => {
+                // Ignore "scattered clouds"
+                if (key === 'polyline') {
+                  return undefined; // Returning undefined removes the key
+                }
+                return value; // Otherwise, return the value as is
+              }, 2)}
+            </Text>
+    
+          </View>
+        );
+      })}
+    </ScrollView>
+  </View>
+) : (
+  !loading && <Text style={styles.noDataText}>No routes available</Text>
+)}
 
       </ScrollView>
     </SafeAreaView>
