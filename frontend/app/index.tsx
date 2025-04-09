@@ -19,8 +19,8 @@ import * as Location from "expo-location";
 
 const baseUrl =
   Platform.OS === "ios"
-    ? "http://129.161.136.89:3000"
-    : "http://129.161.139.185:3000";
+    ? "http://129.161.76.78:3000"
+    : "http://129.161.76.78:3000";
 
 export default function Index() {
   const router = useRouter();
@@ -235,7 +235,11 @@ export default function Index() {
           <Text style={styles.alertTitle}>Severe Weather Alerts</Text>
           <Text style={styles.alertSubtitle}>Wind Advisory, Troy, NY</Text>
           <View style={styles.weatherAlertsButton}>
-            <Button title="Weather Alerts" onPress={() => {}} color="#fff" />
+            <Button
+              title="Weather Alerts"
+              onPress={() => router.push("/settings")}
+              color="#fff"
+            />
           </View>
         </View>
       </View>
