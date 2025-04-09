@@ -65,15 +65,13 @@ router.get("/api/changeStartRoutes", async (req, res) => {
       });
     }
 
-    console.log(" test0 ")
     const manager = new Manager();
     manager.routes = routes; // Assign routes to the manager
-    const bestRoutes = manager.getBestRoute();
-    console.log( "codeeeeeee\n " )
+    const bestRoutes = [manager.getBestRoute()];
 
-    // Format the best routes to send to frontend
-    const formattedRoutes = Array.isArray(bestRoutes)
-  ? bestRoutes.map(r => ({
+    // console.log("Received this from manager: ", bestRoutes)
+
+    const formattedRoutes = bestRoutes.map(r => ({
       startAddress: r.startAddress,
       destinationAddress: r.destinationAddress,
       distance: r.distance,
@@ -81,14 +79,12 @@ router.get("/api/changeStartRoutes", async (req, res) => {
       weatherScore: r.weatherScore,
       weatherType: r.weatherType,
       score: r.score,
+      test: "cooked", // custom/test field
       polyline: r.polyline,
       breakDown: r.weatherBreakdown
-    }))
-  : []; // fallback if bestRoutes is not an array
+    }));
 
-    console.log( bestRoutes );
-
-    console.log(" test1 ")
+    // console.log("Formatted text: " , formattedRoutes)
 
     res.json({ routes: formattedRoutes, mapData: mapDetails });
   } catch (error) {

@@ -5,7 +5,7 @@ import {
   ActivityIndicator,
   Button,
   Platform,
-  SafeAreaView,
+  SafeAreaView, Alert, ScrollView
 } from "react-native";
 import { Text } from "react-native-paper";
 import axios from "axios";
@@ -16,12 +16,10 @@ import MapView, { Marker, Polyline, Callout } from "react-native-maps";
 import DateTimeSelector from "./DateTimeSelector";
 import { TouchableOpacity } from "react-native";
 import * as Location from "expo-location";
+import Config from "../config";
 
-
-const baseUrl =
-  Platform.OS === "ios"
-    ? "http://129.161.76.78:3000"
-    : "http://129.161.76.78:3000";
+// put the ip address here -- everyone (no other ip changes needed)
+const baseUrl = "http://192.168.1.161:3000"
 
 export default function Index() {
   const router = useRouter();
@@ -91,6 +89,47 @@ export default function Index() {
     destinationInputRef.current?.clear();
   };
 
+  const requestLocationPermission = async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission Denied", "Enable location permissions to continue.");
+        return false;
+      }
+      return true;
+  };
+
+  const reverseGeocode = async (latitude: number, longitude: number) => {
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${Config.GOOGLE_API_KEY}`;
+
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+      if (data.status === "OK" && data.results.length > 0) {
+        console.log(data.results[0].formatted_address)
+        setStartAddress(data.results[0].formatted_address);
+      } else {
+        Alert.alert("Error", "Failed to get address");
+      }
+    } catch (error) {
+      console.error("Geocoding Error:", error);
+      Alert.alert("Error", "Failed to fetch address");
+    }
+  };
+  
+  const getLocation = async () => {
+    const hasPermission = await requestLocationPermission();
+    if (!hasPermission) return;
+  
+    const position = await Location.getCurrentPositionAsync({});
+    setStartLat(position.coords.latitude);
+    setStartLong(position.coords.longitude);
+  
+    console.log("Coordinates:", position.coords.latitude, position.coords.longitude);
+    
+    console.log("Google API called");
+    await reverseGeocode(position.coords.latitude, position.coords.longitude);
+  };
+
   const getRoutes = async () => {
     if (!startLat || !startLong || !destinationLat || !destinationLong) {
       alert("Please select valid addresses before searching for routes.");
@@ -100,12 +139,17 @@ export default function Index() {
     try {
       console.log("Start Coords:", startLat, startLong);
       console.log("Destination Coords:", destinationLat, destinationLong);
-      console.log("Sending request to Google Directions API...");
-      const response = await axios.get(
-        `${baseUrl}/api/routes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}&date=${selectedDate}&time=${selectedTime}`
-      );
-      console.log("Received response from Google Directions API");
-      setApiResponse(response.data);
+
+      try {
+        const response = await axios.get(
+          `${baseUrl}/api/changeStartRoutes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}&date=${selectedDate}&time=${selectedTime}`
+        );
+        setApiResponse(response.data);
+      } catch (error) {
+        console.error("Error fetching route data:", error);
+        setApiResponse(null);
+      }
+
     } catch (error) {
       console.error("Error fetching route data:", error);
     } finally {
@@ -113,6 +157,11 @@ export default function Index() {
     }
   };
 
+  useEffect(() => {
+      getLocation();
+    }, []);
+
+  // Auto-fit the map to include all coordinates from the routes.
   useEffect(() => {
     if (apiResponse?.mapData) {
       let allCoordinates: { latitude: number; longitude: number }[] = [];
@@ -144,51 +193,62 @@ export default function Index() {
           longitudeDelta: 0.01,
         }}
       >
-      {apiResponse?.routes?.map((route: any, index: number) => {
-        const color = routeColors[index] || "gray";
-        return (
-          <React.Fragment key={index}>
-            {route.waypoints && (
-              <Polyline
-                coordinates={route.waypoints.map((point: any) => ({
-                  latitude: point.lat,
-                  longitude: point.lng,
-                }))}
-                strokeWidth={4}
-                strokeColor={color}
-              />
-            )}
-            {route.waypoints?.length > 0 && (
-              <>
-                <Marker
-                  coordinate={{
-                    latitude: route.waypoints[0].lat,
-                    longitude: route.waypoints[0].lng,
-                  }}
-                >
-                  <Callout>
-                    <Text>Route {index + 1} Start</Text>
-                  </Callout>
-                </Marker>
-                <Marker
-                  coordinate={{
-                    latitude: route.waypoints[route.waypoints.length - 1].lat,
-                    longitude: route.waypoints[route.waypoints.length - 1].lng,
-                  }}
-                >
-                  <Callout>
-                    <Text>Route {index + 1} End</Text>
-                  </Callout>
-                </Marker>
-              </>
-            )}
-          </React.Fragment>
-        );
-      })}
-      </MapView>
+      {apiResponse?.mapData?.map((route: any, index: number) => {
+            const polylineColor = routeColors[index] || "gray";
+            return (
+              <React.Fragment key={index}>
+                {route.polyline && (
+                  <Polyline
+                    coordinates={decodePolyline(route.polyline)}
+                    strokeWidth={4}
+                    strokeColor={polylineColor}
+                  />
+                )}
+                {route.start && (
+                  <Marker coordinate={route.start}>
+                    <Callout>
+                      <View>
+                        <Text style={{ fontWeight: "bold" }}>
+                          Route {index + 1} Start
+                        </Text>
+                        <Text>Time: {route.duration}</Text>
+                        <Text>Distance: {route.distance} m</Text>
+                      </View>
+                    </Callout>
+                  </Marker>
+                )}
+                {route.end && (
+                  <Marker coordinate={route.end}>
+                    <Callout>
+                      <View>
+                        <Text style={{ fontWeight: "bold" }}>
+                          Route {index + 1} End
+                        </Text>
+                        <Text>Time: {route.duration}</Text>
+                        <Text>Distance: {route.distance} m</Text>
+                      </View>
+                    </Callout>
+                  </Marker>
+                )}
+              </React.Fragment>
+            );
+          })}
+        </MapView>
 
       {/* Floating UI Overlay */}
       <View style={styles.overlayContainer} pointerEvents="box-none">
+
+      <View style={styles.inputWrapper}>
+          <LocationInput
+            placeholder={startAddress || "Enter starting address"}
+            setAddress={setStartAddress}
+            setLat={setStartLat}
+            setLong={setStartLong}
+            inputRef={startInputRef}
+            header=""
+          />
+        </View>
+        
         <View style={styles.inputWrapper}>
           <LocationInput
             placeholder="Enter destination address"
@@ -196,6 +256,7 @@ export default function Index() {
             setLat={setDestinationLat}
             setLong={setDestinationLong}
             inputRef={destinationInputRef}
+            header=""
           />
         </View>
 
@@ -207,24 +268,6 @@ export default function Index() {
             <Text style={styles.buttonText}>Clear</Text>
           </TouchableOpacity>
         </View>
-
-
-        {loading && <ActivityIndicator size="large" color="#0000ff" style={{ marginTop: 10 }} />}
-
-        {apiResponse?.routes && apiResponse.routes.length > 0 && (
-          <View style={styles.routesContainer}>
-            {apiResponse.routes.map((route: any, index: number) => (
-              <View key={index} style={styles.routeCard}>
-                <Text style={styles.routeTitle}>Route {index + 1}</Text>
-                <Text>Start Address: {JSON.stringify(route.startAddress)}</Text>
-                <Text>Destination: {JSON.stringify(route.destinationAddress)}</Text>
-                <Text>Time: {(route.durationSeconds / 60).toFixed(1)} minutes</Text>
-                <Text>Distance: {(route.distanceMeters / 1000).toFixed(2)} km</Text>
-                <Text>Weather Score: {route.getPrecipitationPercent ?? "N/A"}</Text>
-              </View>
-            ))}
-          </View>
-        )}
       </View>
 
       {/* Bottom Fixed Info Card */}
@@ -259,7 +302,32 @@ export default function Index() {
             />
           </View>
         </View>
+
+        {/* DATA DISPLAY THING */}
+        {apiResponse?.routes?.length > 0 && (
+        <View style={styles.routeScrollWrapper}>
+          <ScrollView>
+            {apiResponse.routes.map((route: any, index: number) => (
+              <View key={index} style={styles.routeCard}>
+                <Text style={styles.routeTitle}>
+                  {routeColors[index % routeColors.length].charAt(0).toUpperCase() +
+                    routeColors[index % routeColors.length].slice(1)} Route
+                </Text>
+                <Text>
+                  {JSON.stringify(
+                    route,
+                    (key, value) => (key === "polyline" ? undefined : value),
+                    2
+                  )}
+                </Text>
+              </View>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+
       </View>
+    
       <DateTimeSelector
         visible={showTimePicker}
         onClose={() => setShowTimePicker(false)}
@@ -277,6 +345,10 @@ export default function Index() {
 }
 
 const styles = StyleSheet.create({
+  routeScrollWrapper: {
+    maxHeight: 200,      // 👈 fixed height
+    marginTop: 10,
+  },  
   safeArea: {
     flex: 1,
     backgroundColor: "#fff",
