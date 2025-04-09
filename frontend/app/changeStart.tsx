@@ -19,7 +19,7 @@ import { useRouter } from "expo-router";
 import * as Location from "expo-location";
 import Config from "../config";
 
-const baseUrl = Platform.OS === "ios" ? "http://129.161.136.89:3000" : "http://129.161.139.185:3000";
+const baseUrl = Platform.OS === "ios" ? "http://129.161.76.78:3000" : "http://129.161.76.78:3000";
 
 export default function ChangeStart() {
   const router = useRouter();
