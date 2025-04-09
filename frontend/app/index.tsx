@@ -21,7 +21,8 @@ import { TouchableOpacity } from "react-native";
 import * as Location from "expo-location";
 import Config from "../config";
 
-const baseUrl = "http://localhost:3000";
+// put the ip address here -- everyone (no other ip changes needed)
+const baseUrl = "http://192.168.1.161:3000"
 
 export default function Index() {
   const router = useRouter();
