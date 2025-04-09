@@ -13,6 +13,7 @@ import "react-native-get-random-values";
 import LocationInput from "./locationInput";
 import { useRouter } from "expo-router";
 import MapView, { Marker, Polyline, Callout } from "react-native-maps";
+import DateTimeSelector from "./DateTimeSelector";
 import { TouchableOpacity } from "react-native";
 import * as Location from "expo-location";
 
@@ -37,6 +38,14 @@ export default function Index() {
 
   const startInputRef = useRef<any>(null);
   const destinationInputRef = useRef<any>(null);
+  
+  const [selectedTime, setSelectedTime] = useState<Date>(new Date());
+  const [showTimePicker, setShowTimePicker] = useState<boolean>(false);
+
+  const today = new Date();
+  const formattedToday = today.toISOString().split('T')[0]; // "YYYY-MM-DD"
+
+  const [selectedDate, setSelectedDate] = useState<string>(formattedToday);
   const mapRef = useRef<MapView>(null);
 
   const routeColors = ["blue", "green", "orange", "red", "purple"];
@@ -93,7 +102,7 @@ export default function Index() {
       console.log("Destination Coords:", destinationLat, destinationLong);
       console.log("Sending request to Google Directions API...");
       const response = await axios.get(
-        `http://localhost:3000/api/routes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}`
+        `${baseUrl}/api/routes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}&date=${selectedDate}&time
       );
       console.log("Received response from Google Directions API");
       setApiResponse(response.data);
@@ -230,6 +239,14 @@ export default function Index() {
                 color="#fff"
               />
             </View>
+
+            <View style={styles.changeStartButton}>
+            <Button
+              title="Change Time"
+              onPress={() => setShowTimePicker(true)}
+              color="#fff"
+            />
+            </View>
           </View>
           <Text style={styles.weatherInfo}>60° Mostly Clear</Text>
           <Text style={styles.alertTitle}>Severe Weather Alerts</Text>
@@ -243,6 +260,18 @@ export default function Index() {
           </View>
         </View>
       </View>
+      <DateTimeSelector
+        visible={showTimePicker}
+        onClose={() => setShowTimePicker(false)}
+        onConfirm={(date, time) => {
+          console.log("Selected date:", date);
+          console.log("Selected time:", time.toLocaleTimeString());
+          setSelectedDate(date);
+          setSelectedTime(time);
+          setShowTimePicker(false);
+      }}
+    />
+
     </SafeAreaView>
   );
 }
@@ -296,7 +325,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 2,
-    paddingBottom: 10,
   },
   infoCard: {
     backgroundColor: "#fff",
