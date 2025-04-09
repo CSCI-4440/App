@@ -34,7 +34,6 @@ router.get("/api/changeStartRoutes", async (req, res) => {
 
   try {
     const response = await axios.post(url, body, { headers });
-
     const responseRoutes = response.data.routes;
     const routes = [];
     const mapDetails = [];
@@ -66,12 +65,15 @@ router.get("/api/changeStartRoutes", async (req, res) => {
       });
     }
 
+    console.log(" test0 ")
     const manager = new Manager();
     manager.routes = routes; // Assign routes to the manager
     const bestRoutes = manager.getBestRoute();
+    console.log( "codeeeeeee\n " )
 
     // Format the best routes to send to frontend
-    const formattedRoutes = bestRoutes.map(r => ({
+    const formattedRoutes = Array.isArray(bestRoutes)
+  ? bestRoutes.map(r => ({
       startAddress: r.startAddress,
       destinationAddress: r.destinationAddress,
       distance: r.distance,
@@ -79,8 +81,14 @@ router.get("/api/changeStartRoutes", async (req, res) => {
       weatherScore: r.weatherScore,
       weatherType: r.weatherType,
       score: r.score,
-      polyline: r.polyline
-    }));
+      polyline: r.polyline,
+      breakDown: r.weatherBreakdown
+    }))
+  : []; // fallback if bestRoutes is not an array
+
+    console.log( bestRoutes );
+
+    console.log(" test1 ")
 
     res.json({ routes: formattedRoutes, mapData: mapDetails });
   } catch (error) {
