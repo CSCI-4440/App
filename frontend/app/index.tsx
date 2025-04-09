@@ -14,6 +14,8 @@ import LocationInput from "./locationInput";
 import { useRouter } from "expo-router";
 import MapView, { Marker, Polyline, Callout } from "react-native-maps";
 import { TouchableOpacity } from "react-native";
+import * as Location from "expo-location";
+
 
 const baseUrl =
   Platform.OS === "ios"
@@ -87,9 +89,13 @@ export default function Index() {
     }
     setLoading(true);
     try {
+      console.log("Start Coords:", startLat, startLong);
+      console.log("Destination Coords:", destinationLat, destinationLong);
+      console.log("Sending request to Google Directions API...");
       const response = await axios.get(
-        `${baseUrl}/api/routes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}`
+        `http://localhost:3000/api/routes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}`
       );
+      console.log("Received response from Google Directions API");
       setApiResponse(response.data);
     } catch (error) {
       console.error("Error fetching route data:", error);
