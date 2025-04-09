@@ -235,11 +235,7 @@ export default function Index() {
           <Text style={styles.alertTitle}>Severe Weather Alerts</Text>
           <Text style={styles.alertSubtitle}>Wind Advisory, Troy, NY</Text>
           <View style={styles.weatherAlertsButton}>
-            <Button
-              title="Weather Alerts"
-              onPress={() => router.push("/settings")}
-              color="#fff"
-            />
+            <Button title="Weather Alerts" onPress={() => {}} color="#fff" />
           </View>
         </View>
       </View>
