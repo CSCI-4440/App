@@ -102,7 +102,7 @@ export default function Index() {
       console.log("Destination Coords:", destinationLat, destinationLong);
       console.log("Sending request to Google Directions API...");
       const response = await axios.get(
-        `${baseUrl}/api/routes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}&date=${selectedDate}&time
+        `${baseUrl}/api/routes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}&date=${selectedDate}&time=${selectedTime}`
       );
       console.log("Received response from Google Directions API");
       setApiResponse(response.data);
