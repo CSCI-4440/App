@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   Alert,
   ScrollView,
+  TouchableOpacity,
   Animated,
 } from "react-native";
 import { Text } from "react-native-paper";
@@ -17,17 +18,18 @@ import LocationInput from "./locationInput";
 import { useRouter } from "expo-router";
 import MapView, { Marker, Polyline, Callout } from "react-native-maps";
 import DateTimeSelector from "./DateTimeSelector";
-import { TouchableOpacity } from "react-native";
 import * as Location from "expo-location";
 import Config from "../config";
 
-// put the ip address here -- everyone (no other ip changes needed)
-const baseUrl = "http://192.168.1.161:3000"
+const baseUrl = "http://192.168.1.161:3000";
 
 export default function Index() {
   const router = useRouter();
+
   const [startAddress, setStartAddress] = useState("");
   const [destinationAddress, setDestinationAddress] = useState("");
+  const [currentCity, setCurrentCity] = useState<string>("Fetching city...");
+
   const [startLat, setStartLat] = useState<number | null>(42.7284117);
   const [startLong, setStartLong] = useState<number | null>(-73.69178509999999);
   const [destinationLat, setDestinationLat] = useState<number | null>(null);
@@ -36,14 +38,16 @@ export default function Index() {
   const [loading, setLoading] = useState<boolean>(false);
   const startInputRef = useRef<any>(null);
   const destinationInputRef = useRef<any>(null);
+
   const [selectedTime, setSelectedTime] = useState<Date>(new Date());
   const [showTimePicker, setShowTimePicker] = useState<boolean>(false);
 
   const today = new Date();
   const formattedToday = today.toISOString().split("T")[0];
+  const formattedToday = today.toISOString().split("T")[0];
   const [selectedDate, setSelectedDate] = useState<string>(formattedToday);
-  const mapRef = useRef<MapView>(null);
 
+  const mapRef = useRef<MapView>(null);
   const routeColors = ["blue", "green", "orange", "red", "purple"];
 
   const [isChangingStart, setIsChangingStart] = useState(false);
@@ -73,7 +77,8 @@ export default function Index() {
       lat = 0,
       lng = 0;
     while (index < encoded.length) {
-      let b, shift = 0, result = 0;
+      let b, shift = 0,
+        result = 0;
       do {
         b = encoded.charCodeAt(index++) - 63;
         result |= (b & 0x1f) << shift;
@@ -123,9 +128,20 @@ export default function Index() {
       const response = await fetch(url);
       const data = await response.json();
       if (data.status === "OK" && data.results.length > 0) {
-        setStartAddress(data.results[0].formatted_address);
+        const formattedAddress = data.results[0].formatted_address;
+        setStartAddress(formattedAddress);
+
+        const cityComponent = data.results[0].address_components.find((comp: any) =>
+          comp.types.includes("locality")
+        );
+        if (cityComponent) {
+          setCurrentCity(cityComponent.long_name);
+        } else {
+          setCurrentCity("Unknown Location");
+        }
       } else {
         Alert.alert("Error", "Failed to get address");
+        setCurrentCity("Unknown");
       }
     } catch (error) {
       console.error("Geocoding Error:", error);
@@ -295,7 +311,7 @@ export default function Index() {
       <View style={styles.fixedInfoContainer} pointerEvents="box-none">
         <View style={styles.infoCard}>
           <View style={styles.locationRow}>
-            <Text style={styles.locationTitle}>Troy, NY</Text>
+            <Text style={styles.locationTitle}>{currentCity}</Text>
             <View style={[styles.changeStartButton, { width: 150 }]}>
               <Button
                 title={isChangingStart ? "Cancel" : "Change Start"}
@@ -303,7 +319,6 @@ export default function Index() {
                 color="#fff"
               />
             </View>
-
             <View style={styles.changeStartButton}>
               <Button
                 title="Change Time"
@@ -315,7 +330,7 @@ export default function Index() {
           </View>
           <Text style={styles.weatherInfo}>60° Mostly Clear</Text>
           <Text style={styles.alertTitle}>Severe Weather Alerts</Text>
-          <Text style={styles.alertSubtitle}>Wind Advisory, Troy, NY</Text>
+          <Text style={styles.alertSubtitle}>Wind Advisory, {currentCity}</Text>
           <View style={styles.weatherAlertsButton}>
             <Button
               title="Weather Alerts"
@@ -350,6 +365,7 @@ export default function Index() {
           </View>
         )}
       </View>
+
 
       <DateTimeSelector
         visible={showTimePicker}
@@ -392,7 +408,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 0,
     elevation: 3,
-  },  
+  },
   routeButtonRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -400,9 +416,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#007bff",
     borderRadius: 10,
     padding: 10,
-  },
-  routesContainer: {
-    marginTop: 10,
   },
   routeCard: {
     backgroundColor: "#fff",
@@ -457,6 +470,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#007bff",
     borderRadius: 12,
     overflow: "hidden",
+    marginLeft: 8,
   },
   weatherAlertsButton: {
     backgroundColor: "#007bff",
