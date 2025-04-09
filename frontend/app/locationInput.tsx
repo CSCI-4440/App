@@ -64,6 +64,7 @@ const styles = StyleSheet.create({
     width: "100%",
     marginBottom: 0,
     color: "black",
+    zIndex: 1000,
   },
   input: {
     width: "100%",
