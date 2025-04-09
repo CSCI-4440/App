@@ -15,6 +15,7 @@ import "react-native-get-random-values";
 import LocationInput from "./locationInput";
 import { useRouter } from "expo-router";
 import MapView, { Marker, Polyline, Callout } from "react-native-maps";
+import DateTimeSelector from "./DateTimeSelector";
 
 
 const baseUrl = Platform.OS === "ios" ? "http://129.161.136.89:3000" : "http://129.161.139.185:3000";
@@ -36,6 +37,15 @@ export default function Index() {
 
   const startInputRef = useRef<any>(null);
   const destinationInputRef = useRef<any>(null);
+  
+  const [selectedTime, setSelectedTime] = useState<Date>(new Date());
+  const [showTimePicker, setShowTimePicker] = useState<boolean>(false);
+
+  const today = new Date();
+  const formattedToday = today.toISOString().split('T')[0]; // "YYYY-MM-DD"
+
+const [selectedDate, setSelectedDate] = useState<string>(formattedToday);
+
 
 
 
@@ -92,7 +102,7 @@ export default function Index() {
     setLoading(true);
     try {
       const response = await axios.get(
-        `${baseUrl}/api/routes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}`
+        `${baseUrl}/api/routes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}&date=${selectedDate}&time=${selectedTime}`
       );
       setApiResponse(response.data);
     } catch (error) {
@@ -249,6 +259,14 @@ export default function Index() {
                 color="#fff"
               />
             </View>
+
+            <View style={styles.changeStartButton}>
+            <Button
+              title="Change Time"
+              onPress={() => setShowTimePicker(true)}
+              color="#fff"
+            />
+            </View>
           </View>
           <Text style={styles.weatherInfo}>60° Mostly Clear</Text>
           <Text style={styles.alertTitle}>Severe Weather Alerts</Text>
@@ -258,6 +276,18 @@ export default function Index() {
           </View>
         </View>
       </View>
+      <DateTimeSelector
+        visible={showTimePicker}
+        onClose={() => setShowTimePicker(false)}
+        onConfirm={(date, time) => {
+          console.log("Selected date:", date);
+          console.log("Selected time:", time.toLocaleTimeString());
+          setSelectedDate(date);
+          setSelectedTime(time);
+          setShowTimePicker(false);
+      }}
+    />
+
     </SafeAreaView>
   );
 }
