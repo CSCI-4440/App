@@ -46,17 +46,25 @@ export default function Index() {
   const routeColors = ["blue", "green", "orange", "red", "purple"];
 
   const [isChangingStart, setIsChangingStart] = useState(false);
+  const [showStartInput, setShowStartInput] = useState(false);
   const slideAnim = useRef(new Animated.Value(0)).current;
 
   const toggleChangeStart = () => {
     const toValue = isChangingStart ? 0 : 1;
+  
+    if (toValue === 1) setShowStartInput(true);
+  
     Animated.timing(slideAnim, {
       toValue,
       duration: 300,
       useNativeDriver: false,
-    }).start();
+    }).start(() => {
+      if (toValue === 0) setShowStartInput(false);
+    });
+  
     setIsChangingStart(!isChangingStart);
-  };  
+  };
+  
 
   const decodePolyline = (encoded: string) => {
     let points = [];
@@ -237,29 +245,27 @@ export default function Index() {
               opacity: slideAnim,
               transform: [
                 {
-                  scaleY: slideAnim.interpolate({
+                  translateY: slideAnim.interpolate({
                     inputRange: [0, 1],
-                    outputRange: [0, 1],
+                    outputRange: [-20, 0],
                   }),
                 },
               ],
-              height: slideAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [0, 115],
-              }),
               overflow: "hidden",
             }}
           >
-            <View style={styles.inputWrapper}>
-              <LocationInput
-                placeholder={startAddress || "Enter starting address"}
-                setAddress={setStartAddress}
-                setLat={setStartLat}
-                setLong={setStartLong}
-                inputRef={startInputRef}
-                header=""
-              />
-            </View>
+            {showStartInput && (
+              <View style={[styles.inputWrapper, { marginBottom: 8 }]}>
+                <LocationInput
+                  placeholder={startAddress || "Enter starting address"}
+                  setAddress={setStartAddress}
+                  setLat={setStartLat}
+                  setLong={setStartLong}
+                  inputRef={startInputRef}
+                  header=""
+                />
+              </View>
+            )}
           </Animated.View>
 
           {/** DESTINATION ADDRESS */}
@@ -360,6 +366,8 @@ export default function Index() {
 const styles = StyleSheet.create({
   inputsContainer: {
     flexDirection: "column",
+    padding: 0,
+    margin: 0,
   },  
   routeScrollWrapper: {
     maxHeight: 200,
@@ -378,11 +386,12 @@ const styles = StyleSheet.create({
   },
   inputWrapper: {
     backgroundColor: "transparent",
-    padding: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
     borderRadius: 10,
-    marginBottom: 10,
+    marginBottom: 0,
     elevation: 3,
-  },
+  },  
   routeButtonRow: {
     flexDirection: "row",
     justifyContent: "space-between",
