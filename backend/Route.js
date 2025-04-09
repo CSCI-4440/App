@@ -10,6 +10,7 @@ class Route {
       this.polyline = legs.polyline.encodedPolyline;
       this.legs = legs;
       this.locations = [];
+      this.weather = [];
    }
 
    get getPolyline() {
@@ -34,6 +35,10 @@ class Route {
    }
 
    getWaypointsEveryXMeters(intervalMeters = 40233) {
+      if (this.distanceMeters < intervalMeters)
+      {
+         intervalMeters = this.distanceMeters / 2;
+      }
       let accumulatedDistance = 0;
 
       for (let step of this.legs.steps) {

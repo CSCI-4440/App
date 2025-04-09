@@ -78,6 +78,10 @@ app.get("/api/routes", async (req, res) => {
     }
 });
 
+// Import and mount the changeStart router
+const changeStartRouter = require("./changeStart");
+app.use(changeStartRouter);
+
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });
