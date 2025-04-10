@@ -209,12 +209,19 @@ export default function Index() {
               strokeWidth={4}
               strokeColor={routeColors[selectedRouteIndex % routeColors.length]}
             />
-            {apiResponse.mapData[selectedRouteIndex].start && (
-              <Marker coordinate={apiResponse.mapData[selectedRouteIndex].start} />
-            )}
-            {apiResponse.mapData[selectedRouteIndex].end && (
-              <Marker coordinate={apiResponse.mapData[selectedRouteIndex].end} />
-            )}
+          {(() => {
+            const decoded = decodePolyline(apiResponse.mapData[selectedRouteIndex].polyline);
+            return (
+              <>
+                {decoded.length > 0 && (
+                  <>
+                    <Marker coordinate={decoded[0]} pinColor="green"/>
+                    <Marker coordinate={decoded[decoded.length - 1]} pinColor="red"/>
+                  </>
+                )}
+              </>
+            );
+          })()}
           </React.Fragment>
         )}
       </MapView>
