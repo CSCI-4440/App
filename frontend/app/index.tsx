@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from 'react'
 import {
 	View,
 	StyleSheet,
@@ -10,23 +10,29 @@ import {
 	ScrollView,
 	Animated,
 	TouchableOpacity,
-} from "react-native";
-import { Text } from "react-native-paper";
-import axios from "axios";
-import "react-native-get-random-values";
-import LocationInput from "./locationInput";
-import { useRouter } from "expo-router";
-import MapView, { Marker, Polyline, Callout } from "react-native-maps";
-import DateTimeSelector from "./DateTimeSelector";
-import RouteSummaryCard from './RouteSummaryComponent';
-import * as Location from "expo-location";
-import Config from "../config.js";
+} from 'react-native'
+import { Text } from 'react-native-paper'
+import axios from 'axios'
+import 'react-native-get-random-values'
+import LocationInput from './locationInput'
+import { useRouter } from 'expo-router'
+import MapView, { Marker, Polyline } from 'react-native-maps'
+import DateTimeSelector from './DateTimeSelector'
+import RouteSummaryCard from './RouteSummaryComponent'
+import SplashScreen from './SplashScreen'
+import * as Location from 'expo-location'
+import Config from '../config'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 
 const baseUrl = "http://129.161.77.77:3000"
 
 export default function Index() {
 	const router = useRouter();
+	const insets = useSafeAreaInsets()
+
+	const [showSplash, setShowSplash] = useState(true)
+
 	const [startAddress, setStartAddress] = useState("");
 	const [destinationAddress, setDestinationAddress] = useState("");
 
@@ -51,7 +57,7 @@ export default function Index() {
 	const mapRef = useRef<MapView>(null);
 
 	const routeColors = ["blue", "green", "orange", "red", "purple"];
-
+	const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
 
 	const [isChangingStart, setIsChangingStart] = useState(false)
 	const [showStartInput, setShowStartInput] = useState(false)
@@ -59,52 +65,73 @@ export default function Index() {
 
 	const summaryAnim = useRef(new Animated.Value(0)).current
 
+	const toggleChangeStart = () => {
+		const toValue = isChangingStart ? 0 : 1
+		if (toValue === 1) setShowStartInput(true)
+
+		Animated.timing(slideAnim, {
+			toValue,
+			duration: 300,
+			useNativeDriver: false,
+		}).start(() => {
+			if (toValue === 0) setShowStartInput(false)
+		})
+
+		setIsChangingStart(!isChangingStart)
+	}
+
+	const decodePolyline = (encoded: string) => {
+		let points = []
+		let index = 0,
+			lat = 0,
+			lng = 0
+		while (index < encoded.length) {
+			let b,
+				shift = 0,
+				result = 0
+			do {
+				b = encoded.charCodeAt(index++) - 63
+				result |= (b & 0x1f) << shift
+				shift += 5
+			} while (b >= 0x20)
+			const dlat = result & 1 ? ~(result >> 1) : result >> 1
+			lat += dlat
+
+			shift = 0
+			result = 0
+			do {
+				b = encoded.charCodeAt(index++) - 63
+				result |= (b & 0x1f) << shift
+				shift += 5
+			} while (b >= 0x20)
+			const dlng = result & 1 ? ~(result >> 1) : result >> 1
+			lng += dlng
+
+			points.push({ latitude: lat / 1e5, longitude: lng / 1e5 })
+		}
+		return points
+	}
+
 	function toGoogleTime(dateStr: string, time: Date): string {
 		const t = new Date(time.getTime() + 10 * 60 * 1000)
 
 		return t.toISOString();
 	}
 
-	const decodePolyline = (encoded: string) => {
-		let points = [];
-		let index = 0,
-			lat = 0,
-			lng = 0;
-		while (index < encoded.length) {
-			let b, shift = 0, result = 0;
-			do {
-				b = encoded.charCodeAt(index++) - 63;
-				result |= (b & 0x1f) << shift;
-				shift += 5;
-			} while (b >= 0x20);
-			const dlat = (result & 1) ? ~(result >> 1) : result >> 1;
-			lat += dlat;
-			shift = 0;
-			result = 0;
-			do {
-				b = encoded.charCodeAt(index++) - 63;
-				result |= (b & 0x1f) << shift;
-				shift += 5;
-			} while (b >= 0x20);
-			const dlng = (result & 1) ? ~(result >> 1) : result >> 1;
-			lng += dlng;
-			points.push({ latitude: lat / 1e5, longitude: lng / 1e5 });
-		}
-		return points;
-	};
 
 	const clearOptions = () => {
-		setStartAddress("");
-		setDestinationAddress("");
-		setStartLat(null);
-		setStartLong(null);
-		setDestinationLat(null);
-		setDestinationLong(null);
-		setApiResponse(null);
-		setLoading(false);
-		startInputRef.current?.clear();
-		destinationInputRef.current?.clear();
-	};
+		setStartAddress('')
+		setDestinationAddress('')
+		setStartLat(null)
+		setStartLong(null)
+		setDestinationLat(null)
+		setDestinationLong(null)
+		setApiResponse(null)
+		setSelectedRouteIndex(0)
+		setLoading(false)
+		startInputRef.current?.clear()
+		destinationInputRef.current?.clear()
+	}
 
 	const requestLocationPermission = async () => {
 		const { status } = await Location.requestForegroundPermissionsAsync();
@@ -135,51 +162,54 @@ export default function Index() {
 	};
 
 	const getLocation = async () => {
-		const hasPermission = await requestLocationPermission();
-		if (!hasPermission) return;
-
-		const position = await Location.getCurrentPositionAsync({});
-		setStartLat(position.coords.latitude);
-		setStartLong(position.coords.longitude);
-
-		console.log("Coordinates:", position.coords.latitude, position.coords.longitude);
-
-		console.log("Google API called");
-		await reverseGeocode(position.coords.latitude, position.coords.longitude);
-	};
+		const hasPermission = await requestLocationPermission()
+		if (!hasPermission) return
+		const position = await Location.getCurrentPositionAsync({})
+		setStartLat(position.coords.latitude)
+		setStartLong(position.coords.longitude)
+		await reverseGeocode(position.coords.latitude, position.coords.longitude)
+	}
 
 	const getRoutes = async () => {
 		if (!startLat || !startLong || !destinationLat || !destinationLong) {
 			alert("Please select valid addresses before searching for routes.");
 			return;
 		}
+
 		setLoading(true);
 		try {
 			console.log("Start Coords:", startLat, startLong);
 			console.log("Destination Coords:", destinationLat, destinationLong);
 
-			try {
-				if (!selectedDate) {
-					console.error("date is not found")
-				}
-
-				if (!selectedTime) {
-					console.error("time is not found")
-				}
-				const googleTime = toGoogleTime(selectedDate, selectedTime);
-
-
-				const response = await axios.get(
-					`${baseUrl}/api/getRoutes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}&startTime=${selectedTime}&startDate=${selectedDate}&googleTime=${googleTime}`
-				);
-				setApiResponse(response.data);
-			} catch (error) {
-				console.error("Error fetching route data:", error);
-				setApiResponse(null);
+			if (!selectedDate) {
+				console.error("date is not found")
 			}
+
+			if (!selectedTime) {
+				console.error("time is not found")
+			}
+			const googleTime = toGoogleTime(selectedDate, selectedTime);
+
+
+			const response = await axios.get(
+				`${baseUrl}/api/getRoutes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}&startTime=${selectedTime}&startDate=${selectedDate}&googleTime=${googleTime}`
+			);
+			setApiResponse({
+				...response.data,
+				mapData: response.data.mapData ?? response.data.routes,
+			})
+
+			Animated.timing(summaryAnim, {
+				toValue: 1,
+				duration: 400,
+				useNativeDriver: true,
+			}).start()
+			setSelectedRouteIndex(0)
 
 		} catch (error) {
 			console.error("Error fetching route data:", error);
+			setApiResponse(null);
+			summaryAnim.setValue(0);
 		} finally {
 			setLoading(false);
 		}
@@ -191,7 +221,7 @@ export default function Index() {
 
 	useEffect(() => {
 		if (apiResponse?.mapData) {
-			let allCoordinates = []
+			let allCoordinates: string | any[] | undefined = []
 			const selected = apiResponse.mapData[selectedRouteIndex]
 			if (selected?.polyline) {
 				allCoordinates = decodePolyline(selected.polyline)
