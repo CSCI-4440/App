@@ -1,6 +1,6 @@
-require('dotenv').config();
-const express = require('express');
-const axios = require('axios');
+require("dotenv").config();
+const express = require("express");
+const axios = require("axios");
 const cors = require("cors");
 const Route = require("./Route");
 const Manager = require("./manager");
@@ -22,14 +22,29 @@ router.get("/api/changeStartRoutes", async (req, res) => {
   const headers = {
     "Content-Type": "application/json",
     "X-Goog-Api-Key": API_KEY,
-    "X-Goog-FieldMask": "routes.duration,routes.distanceMeters,routes.legs,routes.polyline"
+    "X-Goog-FieldMask":
+      "routes.duration,routes.distanceMeters,routes.legs,routes.polyline",
   };
   const body = {
-    origin: { location: { latLng: { latitude: parseFloat(startLat), longitude: parseFloat(startLong) } } },
-    destination: { location: { latLng: { latitude: parseFloat(destinationLat), longitude: parseFloat(destinationLong) } } },
+    origin: {
+      location: {
+        latLng: {
+          latitude: parseFloat(startLat),
+          longitude: parseFloat(startLong),
+        },
+      },
+    },
+    destination: {
+      location: {
+        latLng: {
+          latitude: parseFloat(destinationLat),
+          longitude: parseFloat(destinationLong),
+        },
+      },
+    },
     travelMode: "DRIVE",
     routingPreference: "TRAFFIC_AWARE",
-    computeAlternativeRoutes: true
+    computeAlternativeRoutes: true,
   };
 
   try {
@@ -61,7 +76,7 @@ router.get("/api/changeStartRoutes", async (req, res) => {
         end: r.locations[r.locations.length - 1],
         weatherScore: r.weatherScore,
         weatherType: r.weatherType,
-        score: r.score
+        score: r.score,
       });
     }
 
@@ -71,7 +86,7 @@ router.get("/api/changeStartRoutes", async (req, res) => {
 
     // console.log("Received this from manager: ", bestRoutes)
 
-    const formattedRoutes = bestRoutes.map(r => ({
+    const formattedRoutes = bestRoutes.map((r) => ({
       startAddress: r.startAddress,
       destinationAddress: r.destinationAddress,
       distance: r.distance,
@@ -81,7 +96,7 @@ router.get("/api/changeStartRoutes", async (req, res) => {
       score: r.score,
       test: "cooked", // custom/test field
       polyline: r.polyline,
-      breakDown: r.weatherBreakdown
+      breakDown: r.weatherBreakdown,
     }));
 
     // console.log("Formatted text: " , formattedRoutes)
@@ -89,7 +104,9 @@ router.get("/api/changeStartRoutes", async (req, res) => {
     res.json({ routes: formattedRoutes, mapData: mapDetails });
   } catch (error) {
     console.error("Error fetching route data (Change Start):", error.message);
-    res.status(error.response?.status || 500).json({ error: "Failed to fetch routes" });
+    res
+      .status(error.response?.status || 500)
+      .json({ error: "Failed to fetch routes" });
   }
 });
 

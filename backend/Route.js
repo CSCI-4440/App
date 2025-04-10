@@ -6,16 +6,16 @@ const WEATHER_SCORES = {
   "scattered clouds": 3,
   "broken clouds": 4,
   "overcast clouds": 5,
-  "mist": 4,
-  "smoke": 6,
-  "haze": 5,
+  mist: 4,
+  smoke: 6,
+  haze: 5,
   "sand/dust whirls": 6,
-  "fog": 6,
-  "sand": 7,
-  "dust": 7,
+  fog: 6,
+  sand: 7,
+  dust: 7,
   "volcanic ash": 9,
-  "squalls": 8,
-  "tornado": 10,
+  squalls: 8,
+  tornado: 10,
   "light rain": 4,
   "moderate rain": 5,
   "heavy intensity rain": 6,
@@ -27,9 +27,9 @@ const WEATHER_SCORES = {
   "heavy intensity shower rain": 7,
   "ragged shower rain": 7,
   "light snow": 4,
-  "snow": 5,
+  snow: 5,
   "heavy snow": 7,
-  "sleet": 6,
+  sleet: 6,
   "light shower sleet": 5,
   "shower sleet": 6,
   "light rain and snow": 5,
@@ -38,7 +38,7 @@ const WEATHER_SCORES = {
   "shower snow": 6,
   "heavy shower snow": 7,
   "light intensity drizzle": 3,
-  "drizzle": 4,
+  drizzle: 4,
   "heavy intensity drizzle": 5,
   "light intensity drizzle rain": 4,
   "drizzle rain": 5,
@@ -47,7 +47,7 @@ const WEATHER_SCORES = {
   "heavy shower rain and drizzle": 7,
   "shower drizzle": 5,
   "light thunderstorm": 5,
-  "thunderstorm": 6,
+  thunderstorm: 6,
   "heavy thunderstorm": 8,
   "ragged thunderstorm": 8,
   "thunderstorm with light rain": 6,
@@ -55,7 +55,7 @@ const WEATHER_SCORES = {
   "thunderstorm with heavy rain": 8,
   "thunderstorm with light drizzle": 6,
   "thunderstorm with drizzle": 7,
-  "thunderstorm with heavy drizzle": 8
+  "thunderstorm with heavy drizzle": 8,
 };
 
 class Route {
@@ -106,7 +106,8 @@ class Route {
         let ratio = remaining / stepDistance;
 
         let newLat = start.latitude + ratio * (end.latitude - start.latitude);
-        let newLong = start.longitude + ratio * (end.longitude - start.longitude);
+        let newLong =
+          start.longitude + ratio * (end.longitude - start.longitude);
         this.locations.push(new Location(newLat, newLong));
 
         // Reset for next interval
@@ -121,7 +122,7 @@ class Route {
   /**
    * Calculates the worst (highest) weather score based on the defined severity scale.
    * Also calculates a breakdown of weather conditions.
-   * Sets this.weatherScore to the maximum score and sets this.weatherType to 
+   * Sets this.weatherScore to the maximum score and sets this.weatherType to
    * the weather condition associated with that maximum score.
    */
   async calculateWeatherScore() {
@@ -143,7 +144,8 @@ class Route {
         this.weatherConditions.push(description);
 
         if (score > 0) {
-          conditionCounts[description] = (conditionCounts[description] || 0) + 1;
+          conditionCounts[description] =
+            (conditionCounts[description] || 0) + 1;
           totalValidConditions++;
         }
 
@@ -166,7 +168,9 @@ class Route {
     // Calculate percentages for each weather condition
     const conditionPercentages = {};
     for (const [condition, count] of Object.entries(conditionCounts)) {
-      conditionPercentages[condition] = parseFloat(((count / totalValidConditions) * 100).toFixed(1));
+      conditionPercentages[condition] = parseFloat(
+        ((count / totalValidConditions) * 100).toFixed(1)
+      );
     }
 
     this.weatherBreakdown = conditionPercentages;

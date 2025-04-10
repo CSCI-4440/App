@@ -1,5 +1,5 @@
-const Route = require('./Route');
-const Location = require('./Location');
+const Route = require("./Route");
+const Location = require("./Location");
 
 class Manager {
   constructor() {
@@ -26,21 +26,25 @@ class Manager {
    */
   static scoreRoute(route, maxTime, maxDistance) {
     // Set weights for each criterion.
-    const weightWeather = 0.5;   // Weather is very important.
-    const weightTime = 0.25;     // Lower time is better.
+    const weightWeather = 0.5; // Weather is very important.
+    const weightTime = 0.25; // Lower time is better.
     const weightDistance = 0.25; // Lower distance is better.
 
     // Normalize time: lower travel time gives a higher normalized score.
     const timeScore = maxTime ? (maxTime - route.time) / maxTime : 0;
     // Normalize distance: shorter distance gives a higher normalized score.
-    const distanceScore = maxDistance ? (maxDistance - route.distance) / maxDistance : 0;
+    const distanceScore = maxDistance
+      ? (maxDistance - route.distance) / maxDistance
+      : 0;
 
     const weatherScore = route.weatherScore;
 
     // Combine the three criteria.
-    return (weatherScore * weightWeather) +
-           (timeScore * weightTime) +
-           (distanceScore * weightDistance);
+    return (
+      weatherScore * weightWeather +
+      timeScore * weightTime +
+      distanceScore * weightDistance
+    );
   }
 
   /**
@@ -55,17 +59,17 @@ class Manager {
     }
 
     // Determine the maximum values for time and distance across all routes.
-    const maxTime = Math.max(...this.routes.map(r => r.time));
-    const maxDistance = Math.max(...this.routes.map(r => r.distance));
+    const maxTime = Math.max(...this.routes.map((r) => r.time));
+    const maxDistance = Math.max(...this.routes.map((r) => r.distance));
 
     // Compute and attach a score for each route.
-    this.routes.forEach(route => {
+    this.routes.forEach((route) => {
       route.score = Manager.scoreRoute(route, maxTime, maxDistance);
     });
 
     // Sort the routes by score (highest first) and return the best route.
     const bestRoute = this.routes.sort((a, b) => b.score - a.score)[0];
-    
+
     // Log the best route and all its details.
     console.log("Best Route:", bestRoute);
     console.log("Start Address:", bestRoute.startAddress);
@@ -99,11 +103,11 @@ class Manager {
     }
 
     // Determine the maximum values for time and distance across all routes.
-    const maxTime = Math.max(...this.routes.map(r => r.time));
-    const maxDistance = Math.max(...this.routes.map(r => r.distance));
+    const maxTime = Math.max(...this.routes.map((r) => r.time));
+    const maxDistance = Math.max(...this.routes.map((r) => r.distance));
 
     // Compute and attach a score for each route.
-    this.routes.forEach(route => {
+    this.routes.forEach((route) => {
       route.score = Manager.scoreRoute(route, maxTime, maxDistance);
     });
 
