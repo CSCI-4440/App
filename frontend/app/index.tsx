@@ -194,7 +194,7 @@ export default function Index() {
   }, [apiResponse, selectedRouteIndex]);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
       <View style={styles.container}>
         <View style={styles.mapContainer}>
           <MapView
@@ -231,9 +231,8 @@ export default function Index() {
             )}
           </MapView>
         </View>
-
         {!apiResponse && (
-          <View style={[styles.overlayContainer, { top: insets.top - 80 }]}>
+          <View style={[styles.overlayContainer, { top: 0}]}>
           <View style={styles.inputsContainer}>
               <Animated.View
                 style={{
@@ -249,29 +248,32 @@ export default function Index() {
                 }}
               >
                 {showStartInput && (
-                  <View style={[styles.inputWrapper, { marginBottom: 8 }]}>
-                    <LocationInput
-                      placeholder={startAddress || "Enter starting address"}
-                      setAddress={setStartAddress}
-                      setLat={setStartLat}
-                      setLong={setStartLong}
-                      inputRef={startInputRef}
-                      header=""
-                    />
-                  </View>
+                  <SafeAreaView style={{top: insets.top - 80}}>
+                    <View style={[styles.inputWrapper, { marginBottom: 8 }]}>
+                      <LocationInput
+                        placeholder={startAddress || "Enter starting address"}
+                        setAddress={setStartAddress}
+                        setLat={setStartLat}
+                        setLong={setStartLong}
+                        inputRef={startInputRef}
+                        header=""
+                      />
+                    </View>
+                  </SafeAreaView>
                 )}
               </Animated.View>
-
-              <View style={styles.inputWrapper}>
-                <LocationInput
-                  placeholder="Enter destination address"
-                  setAddress={setDestinationAddress}
-                  setLat={setDestinationLat}
-                  setLong={setDestinationLong}
-                  inputRef={destinationInputRef}
-                  header=""
-                />
-              </View>
+              <SafeAreaView style={{top: insets.top - 80}}>
+                <View style={styles.inputWrapper}>
+                  <LocationInput
+                    placeholder="Enter destination address"
+                    setAddress={setDestinationAddress}
+                    setLat={setDestinationLat}
+                    setLong={setDestinationLong}
+                    inputRef={destinationInputRef}
+                    header=""
+                  />
+                </View>
+              </SafeAreaView>
             </View>
 
             <View style={styles.routeButtonRow}>
@@ -346,7 +348,7 @@ export default function Index() {
           }}
         />
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
