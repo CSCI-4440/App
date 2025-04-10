@@ -6,6 +6,7 @@ class Manager {
     // Store all routes here
     this.routes = [];
     this.routesDiffTime = [];
+    this.timeSuggestions = [-6, -3, -2, -1, 1, 2, 3, 6];
   }
 
   /**
@@ -16,9 +17,57 @@ class Manager {
     this.routes.push(route);
   }
 
-  addRoutesDiffTime() {
-    
+  isPast(time) {
+    const now = new Date();
+    return time.getTime() <= now.getTime();
   }
+
+  updateTime(oldTime, intervalHours)
+  {
+    const updated = new Date(oldTime); // Clone to avoid mutating original
+    updated.setHours(updated.getHours() + intervalHours);
+    return updated;
+  }
+
+  
+  // addRoutesDiffTime() {
+  //   let baseTime = this.routes[0].startDate;
+  //   console.log(0);
+  //   for (let changeTime of this.timeSuggestions){
+  //     let newStartTime = this.updateTime(baseTime, changeTime)
+  //     if (this.isPast(newStartTime)){
+  //       continue;
+  //     }
+  //     for (let route of this.routes){
+  //       let newStartTimeRoute = Route.clone(route);
+  //       console.log(1);
+  //       newStartTimeRoute.startDate(newStartTime);
+  //       console.log(2);
+  //       newStartTimeRoute.updateTimesAndConditions(changeTime);
+  //       console.log(3);
+  //       //HAVE TO FIGURE HOW TO UPDATE CONDITIONS
+  //       newStartTimeRoute.calculateWeatherScore();
+  //       routesDiffTime.push(newStartTimeRoute);
+  //     }
+  //   }
+  // }
+
+  getBestTimedRoute() {
+    // Determine the maximum values for time and distance across all routes.
+    const maxTime = Math.max(...this.routesDiffTime.map(r => r.time));
+    const maxDistance = Math.max(...this.routesDiffTime.map(r => r.distance));
+
+    // Compute and attach a score for each route.
+    this.routesDiffTime.forEach(route => {
+      route.score = Manager.scoreRoute(route, maxTime, maxDistance);
+    });
+
+    // Sort the routes by score (highest first) and return the top 'count' routes.
+    const sortedRoutes = this.routes.routesDiffTime.sort((a, b) => b.score - a.score);
+    return sortedRoutes.slice(0, 1);
+  }
+
+
 
 
   /**
@@ -67,24 +116,11 @@ class Manager {
     // Compute and attach a score for each route.
     this.routes.forEach(route => {
       route.score = Manager.scoreRoute(route, maxTime, maxDistance);
-      console.log(route.score);
-      console.log(route.weatherConditions)
     });
 
     // Sort the routes by score (highest first) and return the best route.
     const bestRoute = this.routes.sort((a, b) => b.score - a.score)[0];
     
-    // Log the best route and all its details.
-    // console.log("Best Route:", bestRoute);
-    // console.log("Start Address:", bestRoute.startAddress);
-    // console.log("Destination Address:", bestRoute.destinationAddress);
-    // console.log("Distance:", bestRoute.distance);
-    // console.log("Time:", bestRoute.time);
-    // console.log("Weather Score:", bestRoute.weatherScore);
-    // console.log("Weather Type:", bestRoute.weatherType);
-    // console.log("Score:", bestRoute.score);
-    // console.log("Polyline:", bestRoute.polyline);
-    // console.log("Start Time: ", bestRoute.departTimeUnix);
 
     // Log the weather breakdown if it's available.
     // if (bestRoute.weatherBreakdown) {

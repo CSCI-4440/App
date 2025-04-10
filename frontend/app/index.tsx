@@ -363,7 +363,7 @@ export default function Index() {
 
 const styles = StyleSheet.create({
   routeScrollWrapper: {
-    maxHeight: 200,      // 👈 fixed height
+    maxHeight: 200,      
     marginTop: 10,
   },  
   safeArea: {

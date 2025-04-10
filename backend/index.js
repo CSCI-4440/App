@@ -52,20 +52,24 @@ app.get("/api/getRoutes", async (req, res) => {
       const responseRoutes = response.data.routes;
       const routes = [];
       const mapDetails = [];
+      const manager = new Manager();
       
       for (const route of responseRoutes) {
         const legs = route.legs[0];
+        console.log("Added a route:");
         const r = new Route(legs, dateObject);
-  
+        
         // Set polyline directly
         r.polyline = route.polyline.encodedPolyline;
-  
+        
         // Enrich with weather scoring
-        r.getWaypointsEveryXMeters();
-        await r.calculateWeatherScore();
+        await r.getWaypointsEveryXMeters();
+        r.calculateWeatherScore();
   
         // Push Route instance to scoring system
         routes.push(r);
+        manager.addRoute(r);
+
   
         // Optional map data details
         mapDetails.push({
@@ -79,25 +83,29 @@ app.get("/api/getRoutes", async (req, res) => {
           score: r.score
         });
       }
-  
-      const manager = new Manager();
-      manager.routes = routes; // Assign routes to the manager
+      
+    
       const bestRoutes = [manager.getBestRoute()];
-  
-      // console.log("Received this from manager: ", bestRoutes)
-  
+      console.log("OG Routes:", bestRoutes);
+      
+
+      // manager.addRoutesDiffTime();
+      // const bestTimedRoute = manager.getBestTimedRoute();
+      // console.log("Best Timed Route:", bestTimedRoute);
+      
+      
       const formattedRoutes = bestRoutes.map(r => ({
-        startAddress: r.startAddress,
-        destinationAddress: r.destinationAddress,
-        distance: r.distance,
-        time: r.time,
-        weatherScore: r.weatherScore,
-        weatherType: r.weatherType,
-        score: r.score,
-        polyline: r.polyline,
-        breakDown: r.weatherBreakdown
-      }));
-  
+          startAddress: r.startAddress,
+          destinationAddress: r.destinationAddress,
+          distance: r.distance,
+          time: r.time,
+          weatherScore: r.weatherScore,
+          weatherType: r.weatherType,
+          score: r.score,
+          polyline: r.polyline,
+          breakDown: r.weatherBreakdown
+        }));
+        
       // console.log("Formatted text: " , formattedRoutes)
   
       res.json({ routes: formattedRoutes, mapData: mapDetails });

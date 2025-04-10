@@ -69,9 +69,31 @@ class Route {
     this.legs = legs;
     this.locations = [];
     this.times = [];
+    this.weatherConditions = [];
     this.weatherScore = 0;
     this.weatherType = null; // Will be set to the worst weather condition description
   }
+
+
+  // static clone(originalRoute) {
+  //   const newRoute = new Route(originalRoute.legs, new Date(originalRoute.startDate));
+  
+  //   newRoute.startAddress = { ...originalRoute.startAddress };
+  //   newRoute.destinationAddress = { ...originalRoute.destinationAddress };
+  //   newRoute.distance = originalRoute.distance;
+  //   newRoute.time = originalRoute.time;
+  //   newRoute.polyline = originalRoute.polyline;
+  //   newRoute.weatherScore = originalRoute.weatherScore;
+  //   newRoute.weatherType = originalRoute.weatherType;
+  //   newRoute.weatherBreakdown = { ...(originalRoute.weatherBreakdown || {}) };
+  //   newRoute.times = originalRoute.times.map(t => new Date(t));
+  //   newRoute.locations = originalRoute.locations.map(loc => Location.clone(loc));
+  //   newRoute.weatherConditions = [...originalRoute.weatherConditions];
+  
+  //   return newRoute;
+  // }
+
+
 
   get getPolyline() {
     return this.polyline;
@@ -82,15 +104,17 @@ class Route {
   }
 
 
-  set setStartDate(newDate){
+  set sestartDate(newDate){
     this.startDate = newDate;
   }
 
-  set updateTimes(timeDiffHours){
-    for (let time in this.times){
-      time = this.updateTime(time, timeDiffHours * 60); 
+  set updateTimesAndConditions(timeDiffHours){
+    for (let t = 0; i < this.times.length; t++){
+      this.times[i] = this.updateTime(this.times[i], timeDiffHours * 60); 
+      this.weatherConditions[i] = this.locations[i].getCondition(this.times[i]);
     }
   }
+
 
   roundDateToNearestHour(date) {
     const rounded = new Date(date); // Clone the original date to avoid mutating it
@@ -114,7 +138,7 @@ class Route {
     return updated;
   }
 
-  getWaypointsEveryXMeters(intervalMeters = 40233) {
+  async getWaypointsEveryXMeters(intervalMeters = 40233) {
     if (this.distance < intervalMeters) {
       intervalMeters = this.distance / 2;
     }
@@ -158,7 +182,10 @@ class Route {
         let roundedTime = this.roundDateToNearestHour(timeAtLocation);
         this.times.push(roundedTime);
 
-        this.locations.push(new Location(newLat, newLong));
+        let loc = new Location(newLat, newLong);
+        await loc.fetchWeather();
+
+        this.locations.push(loc);
 
         // Reset for next interval
         accumulatedDistance = 0;
@@ -168,6 +195,7 @@ class Route {
       accumulatedDistance += stepDistance;
     }
   }
+
 
   /**
    * Calculates the worst (highest) weather score based on the defined severity scale.
@@ -182,12 +210,10 @@ class Route {
     let totalValidConditions = 0;
 
     // Initialize an array to collect weather conditions if needed later.
-    this.weatherConditions = [];
-
+    
     for (let i = 0; i < this.locations.length; i++) {
       let loc = this.locations[i];
       let time = this.times[i];
-      await loc.fetchWeather();
       let weatherCondition = loc.getCondition(time);
       // Here we assume the Location class sets the weather description on `loc.weatherCondition`
       if (weatherCondition) {
@@ -213,7 +239,6 @@ class Route {
     this.weatherScore = maxScore;
     // Set weatherType to the worst weather condition (the one that produced maxScore)
     this.weatherType = worstCondition;
-
 
     // Calculate percentages for each weather condition
     const conditionPercentages = {};
