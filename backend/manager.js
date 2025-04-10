@@ -67,23 +67,23 @@ class Manager {
     const bestRoute = this.routes.sort((a, b) => b.score - a.score)[0];
     
     // Log the best route and all its details.
-    console.log("Best Route:", bestRoute);
-    console.log("Start Address:", bestRoute.startAddress);
-    console.log("Destination Address:", bestRoute.destinationAddress);
-    console.log("Distance:", bestRoute.distance);
-    console.log("Time:", bestRoute.time);
-    console.log("Weather Score:", bestRoute.weatherScore);
-    console.log("Weather Type:", bestRoute.weatherType);
-    console.log("Score:", bestRoute.score);
-    console.log("Polyline:", bestRoute.polyline);
-    console.log("Start Time: ", bestRoute.departTimeUnix);
+    // console.log("Best Route:", bestRoute);
+    // console.log("Start Address:", bestRoute.startAddress);
+    // console.log("Destination Address:", bestRoute.destinationAddress);
+    // console.log("Distance:", bestRoute.distance);
+    // console.log("Time:", bestRoute.time);
+    // console.log("Weather Score:", bestRoute.weatherScore);
+    // console.log("Weather Type:", bestRoute.weatherType);
+    // console.log("Score:", bestRoute.score);
+    // console.log("Polyline:", bestRoute.polyline);
+    // console.log("Start Time: ", bestRoute.departTimeUnix);
 
     // Log the weather breakdown if it's available.
-    if (bestRoute.weatherBreakdown) {
-      console.log("Weather Condition Breakdown:", bestRoute.weatherBreakdown);
-    } else {
-      console.log("No weather breakdown available.");
-    }
+    // if (bestRoute.weatherBreakdown) {
+    //   console.log("Weather Condition Breakdown:", bestRoute.weatherBreakdown);
+    // } else {
+    //   console.log("No weather breakdown available.");
+    // }
 
     return bestRoute;
   }

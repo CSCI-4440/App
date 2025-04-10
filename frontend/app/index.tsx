@@ -16,12 +16,10 @@ import MapView, { Marker, Polyline, Callout } from "react-native-maps";
 import DateTimeSelector from "./DateTimeSelector";
 import { TouchableOpacity } from "react-native";
 import * as Location from "expo-location";
+import Config from "../config.js";
 
 
-const baseUrl =
-  Platform.OS === "ios"
-    ? "http://129.161.138.214:3000"
-    : "http://129.161.138.214:3000";
+const baseUrl ="http://129.161.77.77:3000"
 
 export default function Index() {
   const router = useRouter();
@@ -49,6 +47,26 @@ export default function Index() {
   const mapRef = useRef<MapView>(null);
 
   const routeColors = ["blue", "green", "orange", "red", "purple"];
+
+  function toGoogleTime(dateStr: string, time: Date): string {
+    console.log("date",dateStr)
+    console.log(time)
+    const [year, month, day] = dateStr.split('-').map(Number);
+  
+    const utcDate = new Date(Date.UTC(
+      year,
+      month - 1,
+      day,
+      time.getHours(),
+      time.getMinutes(),
+      time.getSeconds()
+    ));
+    // return "2025-04-9T22:43:22.000Z"
+    console.log("herere")
+    const t = new Date(utcDate.getTime() + 10 * 60 * 1000)
+    console.log("hgeage")
+    return t.toISOString();
+  }
 
   const decodePolyline = (encoded: string) => {
     let points = [];
@@ -143,8 +161,18 @@ export default function Index() {
       console.log("Destination Coords:", destinationLat, destinationLong);
 
       try {
+        if ( !selectedDate ){
+          console.error("date is not found")
+        }
+
+        if ( !selectedTime ){
+          console.error("time is not found")
+        }
+        const googleTime = toGoogleTime(selectedDate, selectedTime);
+
+        
         const response = await axios.get(
-          `${baseUrl}/api/changeStartRoutes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}&date=${selectedDate}&time=${selectedTime}`
+          `${baseUrl}/api/getRoutes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}&startTime=${selectedTime}&startDate=${selectedDate}&googleTime=${googleTime}`
         );
         setApiResponse(response.data);
       } catch (error) {
@@ -334,9 +362,10 @@ export default function Index() {
         visible={showTimePicker}
         onClose={() => setShowTimePicker(false)}
         onConfirm={(date, time) => {
+          
           console.log("Selected date:", date);
           console.log("Selected time:", time.toLocaleTimeString());
-          setSelectedDate(date);
+          setSelectedDate(formattedToday);
           setSelectedTime(time);
           setShowTimePicker(false);
       }}

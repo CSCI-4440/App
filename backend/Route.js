@@ -59,13 +59,12 @@ const WEATHER_SCORES = {
 };
 
 class Route {
-  constructor(legs, startDate, startTime) {
+  constructor(legs, startDate) {
     this.startAddress = legs.startLocation.latLng;
     this.destinationAddress = legs.endLocation.latLng;
     this.distance = legs.distanceMeters;
     this.startDate = startDate;
-    this.startTime = startTime;
-    this.time = parseInt(legs.duration.replace("s", ""));
+    this.time = parseInt(legs.duration.replace("s", "")); //duration
     this.polyline = legs.polyline.encodedPolyline;
     this.legs = legs;
     this.locations = [];
@@ -82,17 +81,26 @@ class Route {
     return this.startAddress;
   }
 
-  getTimes()
-  {
-    //for converting to unix time but for now i will just use current time
-    // const date = new Date('2025-04-11T10:00:00'); // Local time
-    // const unixTime = Math.floor(date.getTime() / 1000);
-    let lastLocTimeUnix = 1744223447;
-    let intervalTime = this.time / (this.legs.steps).size();
-    for (let i = 0; i < (this.legs.steps).size(); i++)
-    {
-      this.times.push(lastLocTimeUnix+intervalTime);
+  roundDateToNearestHour(date) {
+    const rounded = new Date(date); // Clone the original date to avoid mutating it
+    const minutes = rounded.getMinutes();
+    
+    if (minutes >= 30) {
+      // Round up: set minutes/seconds/ms to 0 and add 1 hour
+      rounded.setHours(rounded.getHours() + 1, 0, 0, 0);
+    } else {
+      // Round down: just set minutes/seconds/ms to 0
+      rounded.setMinutes(0, 0, 0);
     }
+  
+    return rounded;
+  }
+  
+  updateTime(lastLocTime, intervalMinutes)
+  {
+    const updated = new Date(lastLocTime); // Clone to avoid mutating original
+    updated.setMinutes(updated.getMinutes() + intervalMinutes);
+    return updated;
   }
 
   getWaypointsEveryXMeters(intervalMeters = 40233) {
@@ -103,11 +111,11 @@ class Route {
     //for converting to unix time but for now i will just use current time
     // const date = new Date('2025-04-11T10:00:00'); // Local time
     // const unixTime = Math.floor(date.getTime() / 1000);
-    let lastLocTimeUnix = 1744223447;
-    let intervalTime = this.time / (this.legs.steps).size();
+    let lastLocTime = this.startDate;
+    let intervalMinutes = (this.time / 60) / (this.distance /intervalMeters);
 
 
-    // console.log(`DEPART TIMEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE ${this.departTimeUnix}`);
+    // console.log(`DEPART  ${this.departTimeUnix}`);
     let accumulatedDistance = 0;
 
     for (let step of this.legs.steps) {
@@ -125,17 +133,21 @@ class Route {
         return;
       }
 
+
+
       while (accumulatedDistance + stepDistance >= intervalMeters) {
         let remaining = intervalMeters - accumulatedDistance;
         let ratio = remaining / stepDistance;
-
+        
         let newLat = start.latitude + ratio * (end.latitude - start.latitude);
         let newLong = start.longitude + ratio * (end.longitude - start.longitude);
+        
+        let timeAtLocation = this.updateTime(lastLocTime, intervalMinutes);
+        lastLocTime = timeAtLocation;
+        let roundedTime = this.roundDateToNearestHour(timeAtLocation);
+        this.times.push(roundedTime);
 
-        let timeAtLocation = lastLocTimeUnix+intervalTime;
-        lastLocTimeUnix = timeAtLocation;
-        this.times.push(timeAtLocation);
-        this.locations.push(new Location(newLat, newLong, timeAtLocation));
+        this.locations.push(new Location(newLat, newLong));
 
         // Reset for next interval
         accumulatedDistance = 0;
@@ -161,12 +173,14 @@ class Route {
     // Initialize an array to collect weather conditions if needed later.
     this.weatherConditions = [];
 
-    for (let loc of this.locations) {
+    for (let i = 0; i < this.locations.length; i++) {
+      let loc = this.locations[i];
+      let time = this.times[i];
       await loc.fetchWeather();
-
+      let weatherCondition = loc.getCondition(time);
       // Here we assume the Location class sets the weather description on `loc.weatherCondition`
-      if (loc.weatherCondition) {
-        const description = loc.weatherCondition.toLowerCase();
+      if (weatherCondition) {
+        const description = weatherCondition.toLowerCase();
         const score = WEATHER_SCORES[description] ?? 0;
         this.weatherConditions.push(description);
 
@@ -189,7 +203,6 @@ class Route {
     // Set weatherType to the worst weather condition (the one that produced maxScore)
     this.weatherType = worstCondition;
 
-    console.log("Max score:", maxScore);
 
     // Calculate percentages for each weather condition
     const conditionPercentages = {};
@@ -198,17 +211,14 @@ class Route {
     }
 
     this.weatherBreakdown = conditionPercentages;
-    console.log("Weather condition breakdown:", this.weatherBreakdown);
-    console.log("Weather Type (worst condition):", this.weatherType);
-
     return conditionPercentages;
   }
 }
 
 
-getPercentAfterSunset()
-{
-  
-}
+// getPercentAfterSunset()
+// {
+//   for (let lo)
+// }
 
 module.exports = Route;
