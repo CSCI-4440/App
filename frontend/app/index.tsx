@@ -304,6 +304,12 @@ export default function Index() {
 		<View style={styles.safeArea}>
 			<View style={styles.container}>
 				<View style={styles.mapContainer}>
+					{loading && (
+						<View style={styles.loadingOverlay}>
+							<ActivityIndicator size="large" color="#007bff" />
+							<Text style={styles.loadingText}>Finding safest routes...</Text>
+						</View>
+					)}
 					<MapView
 						ref={mapRef}
 						style={StyleSheet.absoluteFillObject}
@@ -385,10 +391,19 @@ export default function Index() {
 						</View>
 
 						<View style={styles.routeButtonRow}>
-							<TouchableOpacity style={styles.button} onPress={getRoutes}>
+							<TouchableOpacity
+								style={[styles.button, loading && { opacity: 0.6 }]}
+								onPress={getRoutes}
+								disabled={loading}
+							>
 								<Text style={styles.buttonText}>Find Routes</Text>
 							</TouchableOpacity>
-							<TouchableOpacity style={styles.button} onPress={clearOptions}>
+
+							<TouchableOpacity
+								style={[styles.button, loading && { opacity: 0.6 }]}
+								onPress={clearOptions}
+								disabled={loading}
+							>
 								<Text style={styles.buttonText}>Clear</Text>
 							</TouchableOpacity>
 						</View>
@@ -572,5 +587,23 @@ const styles = StyleSheet.create({
 		borderRadius: 16,
 		overflow: 'hidden',
 		marginTop: 8,
+	},
+	loadingOverlay: {
+		position: 'absolute',
+		top: 0,
+		left: 0,
+		right: 0,
+		bottom: 0,
+		backgroundColor: 'rgba(255,255,255,0.8)',
+		justifyContent: 'center',
+		alignItems: 'center',
+		zIndex: 99,
+	},
+
+	loadingText: {
+		marginTop: 10,
+		fontSize: 16,
+		color: '#007bff',
+		fontWeight: '600',
 	},
 })
