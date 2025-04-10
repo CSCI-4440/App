@@ -1,14 +1,16 @@
-require("dotenv").config();
-const express = require("express");
-const axios = require("axios");
+require('dotenv').config();
+const express = require('express');
+const axios = require('axios');
 const cors = require("cors");
 const Route = require("./Route");
-const Manager = require("./manager");
+const Manager = require("./manager")
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const API_KEY = process.env.GOOGLE_API_KEY;
+const API_KEY = process.env.GOOGLE_API_KEY
+
+
 
 app.use(cors());
 
@@ -23,6 +25,7 @@ app.get("/api/getRoutes", async (req, res) => {
     }
 
     const dateObject = new Date(googleTime);
+    console.log("This is the current time:", dateObject);
    
     const url = "https://routes.googleapis.com/directions/v2:computeRoutes";
     const headers = {
@@ -40,7 +43,9 @@ app.get("/api/getRoutes", async (req, res) => {
       departureTime: googleTime
     };
 
+  
     try {
+      console.log("Making Google API Call");
       
       const response = await axios.post(url, body, { headers });
       console.log("Google API Call finished");
@@ -78,12 +83,16 @@ app.get("/api/getRoutes", async (req, res) => {
           score: r.score
         });
       }
+      
     
-      let bestRoutes = [manager.getBestRoute()];      
+      let bestRoutes = [manager.getBestRoute()];
+      // console.log("OG Routes:", bestRoutes);
+      
 
       manager.addRoutesDiffTime();
       const bestTimedRoute = manager.getBestTimedRoute()[0];
       bestRoutes.push(bestTimedRoute);
+      
       
       const formattedRoutes = bestRoutes.map(r => ({
           startAddress: r.startAddress,
@@ -97,14 +106,17 @@ app.get("/api/getRoutes", async (req, res) => {
           breakDown: r.weatherBreakdown,
           departure: r.startDate
         }));
+
+        console.log("Formatted:", formattedRoutes);
   
       res.json({ routes: formattedRoutes, mapData: mapDetails });
     } catch (error) {
       // console.error("Error fetching route data (Change Start):", error.response.data , error.response.status, error.response.request, error.request.stack);
       res.status(error.response?.status || 500).json({ error: "Failed to fetch routes" });
     }
-  });
+});
+
 
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Server running on http://localhost:${PORT}`);
 });
