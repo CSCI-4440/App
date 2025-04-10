@@ -1,15 +1,28 @@
+/**
+ * @file SplashScreen.tsx
+ * @description A React Native component that displays a splash screen with an animated weather icon and a static logo image.
+ * After a delay, the logo image and text fade out, and the onFinish callback is called to navigate to the main app.
+ */
+
 import React, { useEffect, useRef } from 'react'
 import { View, StyleSheet, Animated, Easing, Text, Dimensions, Image } from 'react-native'
 
-const { width } = Dimensions.get('window')
-
+/**
+ * @function SplashScreen
+ * @description A React Native component that displays a splash screen with an animated weather icon and a static logo image.
+ * @param param0 - Props for the SplashScreen component.
+ * @param param0.onFinish - Callback function to be called when the splash screen animation is finished.
+ * @returns
+ */
 const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
+	// Constants for screen dimensions
 	const iconScale = useRef(new Animated.Value(1)).current
 	const iconOpacity = useRef(new Animated.Value(1)).current
 	const cloudOpacity = useRef(new Animated.Value(0)).current
 	const textOpacity = useRef(new Animated.Value(0)).current
 	const textTranslateY = useRef(new Animated.Value(10)).current
 
+	// Start the animation sequence when the component mounts
 	useEffect(() => {
 		// Wait 1 second with weather icon
 		setTimeout(() => {
@@ -69,6 +82,7 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
 		}, 1000)
 	}, [])
 
+	// Render the splash screen
 	return (
 		<View style={styles.container}>
 			{/* Weather Icon (start state) */}
@@ -126,6 +140,7 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
 	)
 }
 
+// Styles for the SplashScreen component
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
