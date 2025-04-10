@@ -1,28 +1,9 @@
-/**
- * @file LocationInput.tsx
- * @description A React Native component that provides an input field for users to enter a location.
- * It uses the Google Places API to provide autocomplete suggestions for locations.
- * The selected location's address, latitude, and longitude are passed back to the parent component via callback functions.
- */
-
 import React from 'react'
 import { View, StyleSheet } from 'react-native'
 import { Paragraph, TextInput } from 'react-native-paper'
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete'
 import Config from '../config'
 
-/**
- * @interface LocationInputProps
- * @description Props for the LocationInput component.
- * @property {string} placeholder - Placeholder text for the input field.
- * @property {string} header - Header text for the input field.
- * @property {(address: string) => void} setAddress - Callback function to set the selected address.
- * @property {(lat: number) => void} setLat - Callback function to set the latitude of the selected location.
- * @property {(long: number) => void} setLong - Callback function to set the longitude of the selected location.
- * @property {any} inputRef - Reference to the input field.
- * @property {any} style - Additional styles for the input field.
- * @description The LocationInput component provides an input field for users to enter a location.
- */
 interface LocationInputProps {
 	placeholder: string
 	header: string
@@ -33,12 +14,6 @@ interface LocationInputProps {
 	style?: any
 }
 
-/**
- * @function LocationInput
- * @description A React Native component that provides an input field for users to enter a location.
- * @param param0 - Props for the LocationInput component.
- * @returns {JSX.Element} - A React Native component that provides an input field for location selection.
- */
 const LocationInput: React.FC<LocationInputProps> = ({
 	header,
 	placeholder,
@@ -47,7 +22,6 @@ const LocationInput: React.FC<LocationInputProps> = ({
 	setLong,
 	inputRef,
 }) => {
-	// Render the Google Places Autocomplete component
 	return (
 		<View style={styles.autoCompleteContainer}>
 			<Paragraph>{header}</Paragraph>
@@ -84,7 +58,7 @@ const LocationInput: React.FC<LocationInputProps> = ({
 	)
 }
 
-// Styles for the LocationInput component
+// Styles
 const styles = StyleSheet.create({
 	autoCompleteContainer: {
 		width: '100%',
