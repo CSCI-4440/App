@@ -85,6 +85,115 @@ const computeArrivalTime = (startTime: Date, durationInSeconds: number) => {
 	return arrival.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
+const convertTo24Hour = (timeStr: string): string => {
+	if (!timeStr) return '00:00:00';
+
+	// Replace any smart spaces like U+202F (narrow no-break space) with normal spaces
+	const cleanedStr = timeStr.replace(/\u202F/g, ' ').trim();
+
+	const [time, modifier] = cleanedStr.split(' ');
+	let [hours, minutes, seconds = '00'] = time.split(':');
+
+	hours = parseInt(hours).toString();
+
+	if (modifier == 'PM' && hours !== '12') {
+		hours = (parseInt(hours) + 12).toString();
+	} else if (modifier == 'AM' && hours === '12') {
+		hours = '00';
+	}
+
+	hours = hours.padStart(2, '0');
+	minutes = minutes.padStart(2, '0');
+	seconds = seconds.padStart(2, '0');
+
+	return `${hours}:${minutes}:${seconds}`;
+};
+
+const getPercentage = (
+	sunsetStr: string,
+	arrivalStr: string,
+	durationStr: string,
+	currentTime: Date | string
+  ): string => {
+	try {
+  
+	  // Convert sunset and arrival using the 24-hour conversion and fixed date
+	  const sunset = new Date(`1970-01-01T${convertTo24Hour(sunsetStr)}Z`);
+	  const arrival = new Date(`1970-01-01T${convertTo24Hour(arrivalStr)}Z`);
+  
+	  // Convert currentTime to a Date if needed and then normalize it to UTC
+	  let current: Date;
+	  if (typeof currentTime === "string") {
+		current = new Date(currentTime); // Convert string to Date
+	  } else {
+		current = currentTime; // If it's already a Date object
+	  }
+
+	  // Adjust current time to UTC-4 by subtracting 4 hours
+	  const currentUTCMinus4 = new Date(current);
+	  currentUTCMinus4.setHours(currentUTCMinus4.getHours() - 5); // Adjust to UTC-4
+  
+	  // Extract only hours and minutes for current time
+	  const currentHour = currentUTCMinus4.getHours();
+	  const currentMinute = currentUTCMinus4.getMinutes();
+  
+	  // Normalize sunset and arrival times to hours and minutes only
+	  const sunsetHour = sunset.getHours();
+	  const sunsetMinute = sunset.getMinutes();
+	  const arrivalHour = arrival.getHours();
+	  const arrivalMinute = arrival.getMinutes();
+  
+	//   console.log(`Adjusted Current Time (UTC-4) → ${currentHour}:${currentMinute}`);
+	//   console.log(`Normalized Times → Sunset: ${sunsetHour}:${sunsetMinute}, Arrival: ${arrivalHour}:${arrivalMinute}`);
+  
+	  // Convert times to minutes from the start of the day for comparison
+	  const currentTimeInMinutes = currentHour * 60 + currentMinute;
+	  const sunsetTimeInMinutes = sunsetHour * 60 + sunsetMinute;
+	  const arrivalTimeInMinutes = arrivalHour * 60 + arrivalMinute;
+  
+	//   console.log("currentTimeInMinutes:", currentTimeInMinutes);
+	//   console.log("sunsetTimeInMinutes:", sunsetTimeInMinutes);
+	//   console.log("arrivalTimeInMinutes:", arrivalTimeInMinutes);
+  
+	  // If the trip has not started yet (arrival is before sunset), return 0%
+	  if (arrivalTimeInMinutes < sunsetTimeInMinutes) {
+		return '0.0%';
+	  }
+  
+	  // If the current time is after sunset, return 100% (the trip is over)
+	  if (currentTimeInMinutes >= sunsetTimeInMinutes) {
+		return '100.0%';
+	  }
+  
+	  // Calculate the elapsed time from current time to sunset
+	  const elapsedTime = sunsetTimeInMinutes - currentTimeInMinutes;
+	//   console.log("Elapsed Time (minutes):", elapsedTime);
+  
+	  // Parse the duration to get minutes (assuming the format "XX min")
+	  const [durMinStr] = durationStr.split(' ');
+	  const durationMin = parseInt(durMinStr);
+	  const durationMs = durationMin * 60 * 1000; // Convert duration to milliseconds
+  
+	  // Calculate the percentage of the trip completed based on the current time
+	  let percentage = (elapsedTime / durationMin) * 100;
+	  if (percentage>1000)
+	  {
+		percentage=percentage/100; 
+	  }
+	  else if (percentage>100)
+	  {
+		percentage=percentage/10;
+	  }
+	//   console.log("DURATION (minutes):", durationMin);
+	  console.log(`After sunset: ${percentage.toFixed(1)}%`);
+  
+	  return `${percentage.toFixed(1)}%`;
+	} catch (error) {
+	  console.error("Error in getPercentage function:", error);
+	  return '0.0%'; // Default return value if there's an error
+	}
+  };
+
 /**
  * @function RouteSummaryCard
  * @description A React Native component that displays a summary of the selected route for a trip.
@@ -104,7 +213,7 @@ const RouteSummaryCard = ({
 	currentTime,
 }: Props) => {
 	const selectedRoute = routes[selectedRouteIndex]
-	console.log('Selected route data: ', selectedRoute)
+	// console.log('Selected route data: ', selectedRoute)
 
 	// Render the route summary card
 	return (
@@ -163,12 +272,21 @@ const RouteSummaryCard = ({
 						: 'N/A'}
 				</Text>
 
-				<Text style={styles.sectionHeader}>Weather Info</Text>
+				<Text style={styles.detail}>
+					Sunset Time: {selectedRoute.sunsetTime}
+				</Text>
+
+				<Text style={styles.detail}>
+					After Sunset Percentage:
+					{getPercentage(selectedRoute?.sunsetTime , computeArrivalTime(currentTime, selectedRoute.duration), formatDuration(selectedRoute.duration), currentTime)}
+				</Text>
+
+				{/* <Text style={styles.sectionHeader}>Weather Info</Text>
 				{weatherStats.map((stat, index) => (
 					<Text key={index} style={styles.detail}>
 						{stat.label}: {stat.value}
 					</Text>
-				))}
+				))} */}
 			</ScrollView>
 
 			<View style={styles.buttonRow}>

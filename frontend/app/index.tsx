@@ -200,6 +200,8 @@ export default function Index() {
 				mapData: response.data.mapData ?? response.data.routes,
 			})
 
+			console.log(response.data.routes)
+
 			Animated.timing(summaryAnim, {
 				toValue: 1,
 				duration: 400,

@@ -61,7 +61,8 @@ router.get("/api/changeStartRoutes", async (req, res) => {
         end: r.locations[r.locations.length - 1],
         weatherScore: r.weatherScore,
         weatherType: r.weatherType,
-        score: r.score
+        score: r.score,
+        sunset: r.sunsetTime
       });
     }
 
@@ -81,10 +82,11 @@ router.get("/api/changeStartRoutes", async (req, res) => {
       score: r.score,
       test: "cooked", // custom/test field
       polyline: r.polyline,
-      breakDown: r.weatherBreakdown
+      breakDown: r.weatherBreakdown,
+      sunset: r.sunsetTime
     }));
 
-    // console.log("Formatted text: " , formattedRoutes)
+    console.log("Formatted text: " , formattedRoutes)
 
     res.json({ routes: formattedRoutes, mapData: mapDetails });
   } catch (error) {

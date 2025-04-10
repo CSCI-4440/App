@@ -64,7 +64,14 @@ app.get("/api/getRoutes", async (req, res) => {
         
         // Enrich with weather scoring
         await r.getWaypointsEveryXMeters();
-        r.calculateWeatherScore();
+        await r.setSunsetTime();
+
+        try {
+          await r.calculateWeatherScore();
+        } catch (error) {
+          console.log(error)
+        }
+        
   
         // Push Route instance to scoring system
         routes.push(r);
@@ -81,7 +88,8 @@ app.get("/api/getRoutes", async (req, res) => {
           weatherScore: r.weatherScore,
           weatherType: r.weatherType,
           score: r.score,
-          departure: r.startDate.toISOString()
+          departure: r.startDate.toISOString(),
+          sunsetTime: r.sunsetTime
         });
       }
       
@@ -102,7 +110,7 @@ app.get("/api/getRoutes", async (req, res) => {
         weatherScore: bestTimedRoute.weatherScore,
         weatherType: bestTimedRoute.weatherType,
         score: bestTimedRoute.score,
-        departure: bestTimedRoute.startDate.toISOString()
+        departure: bestTimedRoute.startDate.toISOString(),
       });
       bestRoutes.push(bestTimedRoute);
       
@@ -117,10 +125,11 @@ app.get("/api/getRoutes", async (req, res) => {
           score: r.score,
           polyline: r.polyline,
           breakDown: r.weatherBreakdown,
-          departure: r.startDate.toISOString()
+          departure: r.startDate.toISOString(),
+          sunsetTime: r.sunsetTime
         }));
 
-        console.log(formattedRoutes.length);
+        // console.log(formattedRoutes.length);
         // console.log("Formatted:", formattedRoutes);
   
       res.json({ routes: formattedRoutes, mapData: mapDetails });

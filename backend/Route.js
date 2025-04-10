@@ -1,4 +1,6 @@
+const axios = require("axios");
 const Location = require("./Location");
+
 // Weather severity scale
 const WEATHER_SCORES = {
   "clear sky": 1,
@@ -72,6 +74,41 @@ class Route {
     this.weatherConditions = [];
     this.weatherScore = 0;
     this.weatherType = null; // Will be set to the worst weather condition description
+    this.sunsetTime = null;
+  }
+
+  async setSunsetTime() {
+    // Fetch sunset time and set it
+    this.sunsetTime = await this.fetchSunsetTime();
+  }
+
+  get getDestination() {
+    return this.destinationAddress;
+  }
+
+  async fetchSunsetTime() {
+    // const { latitude, longitude } = this.getDestination();
+
+    const API_KEY = process.env.OPENWEATHER_API_KEY; // Your OpenWeather API key
+    // console.log("faigheigaiengangengepo")
+    // console.log(this.destinationAddress.latitude)
+    // console.log(this.destinationAddress.longitude)
+    // console.log(API_KEY)
+    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${this.destinationAddress.latitude}&lon=${this.destinationAddress.longitude}&units=metric&appid=${API_KEY}`;
+
+    console.log(url)
+    try {
+
+      const response = await axios.get(url);
+      // console.log("API Response:", response.data.sys.sunset); // Log the whole response
+      const sunsetTimestamp = response.data.sys.sunset;
+      const sunsetDate = new Date(sunsetTimestamp * 1000); // Convert to milliseconds
+      // console.log("SUNSET:", sunsetDate.toLocaleTimeString());
+      return sunsetDate.toLocaleTimeString(); // Returns sunset time as a formatted string
+    } catch (error) {
+      console.error("Error fetching sunset time:", error.message);
+      return null;
+    }
   }
 
 
@@ -202,6 +239,7 @@ class Route {
    * the weather condition associated with that maximum score.
    */
   async calculateWeatherScore() {
+    await this.setSunsetTime();
     let maxScore = 0;
     let worstCondition = null;
     let conditionCounts = {};
