@@ -19,16 +19,21 @@ import LocationInput from "./locationInput";
 import { useRouter } from "expo-router";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import DateTimeSelector from "./DateTimeSelector";
+import RouteSummaryCard from "./RouteSummaryComponent";
+import SplashScreen from "./SplashScreen";
 import * as Location from "expo-location";
 import Config from "../config";
-import RouteSummaryCard from "./RouteSummaryComponent";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const baseUrl = "http://129.161.37.142:3000";
+
+const baseUrl = "http://129.161.66.19:3000";
 
 export default function Index() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+
+  const [showSplash, setShowSplash] = useState(true);
+
   const [startAddress, setStartAddress] = useState("");
   const [destinationAddress, setDestinationAddress] = useState("");
   const [startLat, setStartLat] = useState<number | null>(42.7284117);
@@ -202,6 +207,10 @@ export default function Index() {
     }
   }, [apiResponse, selectedRouteIndex]);
 
+  if (showSplash) {
+    return <SplashScreen onFinish={() => setShowSplash(false)} />;
+  }
+  
   return (
     <View style={styles.safeArea}>
       <View style={styles.container}>
