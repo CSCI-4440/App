@@ -121,8 +121,8 @@ const styles = StyleSheet.create({
     padding: 16,
     elevation: 4,
     height: 250,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
   },  
   scroll: {
     maxHeight: 240,

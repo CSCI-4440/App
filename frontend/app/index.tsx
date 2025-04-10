@@ -370,6 +370,7 @@ const styles = StyleSheet.create({
     left: 16,
     right: 16,
     zIndex: 1,
+    borderRadius: 16,
   },
   overlayContainer: {
     position: "absolute",
@@ -381,12 +382,13 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     padding: 0,
     margin: 0,
+    borderRadius: 16,
   },
   inputWrapper: {
     backgroundColor: "transparent",
     paddingVertical: 10,
     paddingHorizontal: 10,
-    borderRadius: 10,
+    borderRadius: 16,
     marginBottom: 0,
     elevation: 3,
   },
@@ -395,7 +397,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 10,
     backgroundColor: "#007bff",
-    borderRadius: 10,
+    borderRadius: 16,
     padding: 10,
   },
   button: {
@@ -403,7 +405,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#007bff",
     paddingVertical: 10,
     marginHorizontal: 5,
-    borderRadius: 8,
+    borderRadius: 16,
     alignItems: "center",
   },
   buttonText: {
@@ -417,6 +419,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 2,
+    borderRadius: 16
   },
   infoCard: {
     backgroundColor: "#fff",
@@ -440,12 +443,12 @@ const styles = StyleSheet.create({
   alertSubtitle: { fontSize: 14, marginBottom: 16 },
   changeStartButton: {
     backgroundColor: "#007bff",
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: "hidden",
   },
   weatherAlertsButton: {
     backgroundColor: "#007bff",
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: "hidden",
     marginTop: 8,
   },
