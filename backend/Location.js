@@ -1,7 +1,8 @@
-const axios = require("axios"); 
+const axios = require("axios");
 
 //define the Location class to represent a geographic location
 class Location {
+  
     constructor(lat, long) {
         //store the latitude and longitude of the location
         this.latitude = lat;

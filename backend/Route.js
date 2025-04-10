@@ -1,4 +1,6 @@
+const axios = require("axios");
 const Location = require("./Location");
+
 // Weather severity scale
 const WEATHER_SCORES = {
   "clear sky": 1,
@@ -6,16 +8,16 @@ const WEATHER_SCORES = {
   "scattered clouds": 3,
   "broken clouds": 4,
   "overcast clouds": 5,
-  "mist": 4,
-  "smoke": 6,
-  "haze": 5,
+  mist: 4,
+  smoke: 6,
+  haze: 5,
   "sand/dust whirls": 6,
-  "fog": 6,
-  "sand": 7,
-  "dust": 7,
+  fog: 6,
+  sand: 7,
+  dust: 7,
   "volcanic ash": 9,
-  "squalls": 8,
-  "tornado": 10,
+  squalls: 8,
+  tornado: 10,
   "light rain": 4,
   "moderate rain": 5,
   "heavy intensity rain": 6,
@@ -27,9 +29,9 @@ const WEATHER_SCORES = {
   "heavy intensity shower rain": 7,
   "ragged shower rain": 7,
   "light snow": 4,
-  "snow": 5,
+  snow: 5,
   "heavy snow": 7,
-  "sleet": 6,
+  sleet: 6,
   "light shower sleet": 5,
   "shower sleet": 6,
   "light rain and snow": 5,
@@ -38,7 +40,7 @@ const WEATHER_SCORES = {
   "shower snow": 6,
   "heavy shower snow": 7,
   "light intensity drizzle": 3,
-  "drizzle": 4,
+  drizzle: 4,
   "heavy intensity drizzle": 5,
   "light intensity drizzle rain": 4,
   "drizzle rain": 5,
@@ -47,7 +49,7 @@ const WEATHER_SCORES = {
   "heavy shower rain and drizzle": 7,
   "shower drizzle": 5,
   "light thunderstorm": 5,
-  "thunderstorm": 6,
+  thunderstorm: 6,
   "heavy thunderstorm": 8,
   "ragged thunderstorm": 8,
   "thunderstorm with light rain": 6,
@@ -55,7 +57,7 @@ const WEATHER_SCORES = {
   "thunderstorm with heavy rain": 8,
   "thunderstorm with light drizzle": 6,
   "thunderstorm with drizzle": 7,
-  "thunderstorm with heavy drizzle": 8
+  "thunderstorm with heavy drizzle": 8,
 };
 
 class Route {
@@ -72,6 +74,41 @@ class Route {
     this.weatherConditions = [];
     this.weatherScore = 0;
     this.weatherType = null; // Will be set to the worst weather condition description
+    this.sunsetTime = null; // Sunset time for the destination
+  }
+
+  async setSunsetTime() {
+    // Fetch sunset time and set it
+    this.sunsetTime = await this.fetchSunsetTime();
+  }
+
+  get getDestination() {
+    return this.destinationAddress;
+  }
+
+  async fetchSunsetTime() {
+    // const { latitude, longitude } = this.getDestination();
+
+    const API_KEY = process.env.OPENWEATHER_API_KEY; // Your OpenWeather API key
+    console.log("faigheigaiengangengepo")
+    console.log(this.destinationAddress.latitude)
+    console.log(this.destinationAddress.longitude)
+    console.log(API_KEY)
+    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${this.destinationAddress.latitude}&lon=${this.destinationAddress.longitude}&units=metric&appid=${API_KEY}`;
+
+    console.log(url)
+    try {
+
+      const response = await axios.get(url);
+      console.log("API Response:", response.data.sys.sunset); // Log the whole response
+      const sunsetTimestamp = response.data.sys.sunset;
+      const sunsetDate = new Date(sunsetTimestamp * 1000); // Convert to milliseconds
+      console.log("SUNSET:", sunsetDate.toLocaleTimeString());
+      return sunsetDate.toLocaleTimeString(); // Returns sunset time as a formatted string
+    } catch (error) {
+      console.error("Error fetching sunset time:", error.message);
+      return null;
+    }
   }
 
 
@@ -100,7 +137,6 @@ class Route {
   get getStart() {
     return this.startAddress;
   }
-
 
   set setStartDate(newDate){
     this.startDate = newDate;
@@ -198,10 +234,11 @@ class Route {
   /**
    * Calculates the worst (highest) weather score based on the defined severity scale.
    * Also calculates a breakdown of weather conditions.
-   * Sets this.weatherScore to the maximum score and sets this.weatherType to 
+   * Sets this.weatherScore to the maximum score and sets this.weatherType to
    * the weather condition associated with that maximum score.
    */
   async calculateWeatherScore() {
+    this.setSunsetTime();
     let maxScore = 0;
     let worstCondition = null;
     let conditionCounts = {};
@@ -220,7 +257,8 @@ class Route {
         this.weatherConditions.push(description);
 
         if (score > 0) {
-          conditionCounts[description] = (conditionCounts[description] || 0) + 1;
+          conditionCounts[description] =
+            (conditionCounts[description] || 0) + 1;
           totalValidConditions++;
         }
 
@@ -241,7 +279,9 @@ class Route {
     // Calculate percentages for each weather condition
     const conditionPercentages = {};
     for (const [condition, count] of Object.entries(conditionCounts)) {
-      conditionPercentages[condition] = parseFloat(((count / totalValidConditions) * 100).toFixed(1));
+      conditionPercentages[condition] = parseFloat(
+        ((count / totalValidConditions) * 100).toFixed(1)
+      );
     }
 
     this.weatherBreakdown = conditionPercentages;
