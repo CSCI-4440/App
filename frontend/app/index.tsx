@@ -1,3 +1,4 @@
+// index.tsx
 import React, { useState, useRef, useEffect } from "react";
 import {
   View,
@@ -16,7 +17,7 @@ import axios from "axios";
 import "react-native-get-random-values";
 import LocationInput from "./locationInput";
 import { useRouter } from "expo-router";
-import MapView, { Marker, Polyline, Callout } from "react-native-maps";
+import MapView, { Marker, Polyline } from "react-native-maps";
 import DateTimeSelector from "./DateTimeSelector";
 import * as Location from "expo-location";
 import Config from "../config";
@@ -48,13 +49,11 @@ export default function Index() {
   const destinationInputRef = useRef<any>(null);
 
   const routeColors = ["blue", "green", "orange", "red", "purple"];
+  const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
 
   const [isChangingStart, setIsChangingStart] = useState(false);
   const [showStartInput, setShowStartInput] = useState(false);
   const slideAnim = useRef(new Animated.Value(0)).current;
-
-  const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
-
 
   const toggleChangeStart = () => {
     const toValue = isChangingStart ? 0 : 1;
@@ -109,6 +108,7 @@ export default function Index() {
     setDestinationLat(null);
     setDestinationLong(null);
     setApiResponse(null);
+    setSelectedRouteIndex(0);
     setLoading(false);
     startInputRef.current?.clear();
     destinationInputRef.current?.clear();
@@ -145,32 +145,30 @@ export default function Index() {
     await reverseGeocode(position.coords.latitude, position.coords.longitude);
   };
 
-const getRoutes = async () => {
-  if (!startLat || !startLong || !destinationLat || !destinationLong) {
-    Alert.alert("Missing input", "Please select both a start and destination.");
-    return;
-  }
+  const getRoutes = async () => {
+    if (!startLat || !startLong || !destinationLat || !destinationLong) {
+      Alert.alert("Missing input", "Please select both a start and destination.");
+      return;
+    }
 
-  setLoading(true);
-  try {
-    const response = await axios.get(
-      `${baseUrl}/api/changeStartRoutes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}&date=${selectedDate}&time=${selectedTime}`
-    );
-    
-    // 👇 This ensures that mapData is available
-    setApiResponse({
-      ...response.data,
-      mapData: response.data.mapData ?? response.data.routes // fallback
-    });
-    
-  } catch (err) {
-    console.error("Route Fetch Error:", err);
-    setApiResponse(null);
-  } finally {
-    setLoading(false);
-  }
-};
+    setLoading(true);
+    try {
+      const response = await axios.get(
+        `${baseUrl}/api/changeStartRoutes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}&date=${selectedDate}&time=${selectedTime}`
+      );
 
+      setApiResponse({
+        ...response.data,
+        mapData: response.data.mapData ?? response.data.routes,
+      });
+      setSelectedRouteIndex(0); // Show first route by default
+    } catch (err) {
+      console.error("Route Fetch Error:", err);
+      setApiResponse(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     getLocation();
@@ -179,19 +177,18 @@ const getRoutes = async () => {
   useEffect(() => {
     if (apiResponse?.mapData) {
       let allCoordinates = [];
-      apiResponse.mapData.forEach((route: any) => {
-        if (route.polyline) {
-          allCoordinates = allCoordinates.concat(decodePolyline(route.polyline));
-        }
-      });
-      if (mapRef.current) {
+      const selected = apiResponse.mapData[selectedRouteIndex];
+      if (selected?.polyline) {
+        allCoordinates = decodePolyline(selected.polyline);
+      }
+      if (mapRef.current && allCoordinates.length > 0) {
         mapRef.current.fitToCoordinates(allCoordinates, {
           edgePadding: { top: 50, bottom: 50, left: 50, right: 50 },
           animated: true,
         });
       }
     }
-  }, [apiResponse]);
+  }, [apiResponse, selectedRouteIndex]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -206,7 +203,7 @@ const getRoutes = async () => {
         }}
       >
         {apiResponse?.mapData && apiResponse.mapData[selectedRouteIndex] && (
-          <React.Fragment key={selectedRouteIndex}>
+          <React.Fragment>
             <Polyline
               coordinates={decodePolyline(apiResponse.mapData[selectedRouteIndex].polyline)}
               strokeWidth={4}
@@ -310,10 +307,6 @@ const getRoutes = async () => {
           <RouteSummaryCard
             start={startAddress}
             destination={destinationAddress}
-            duration={"13 hr 15 min"}
-            distance={"808 mi"}
-            tolls={"$8.00 in tolls"}
-            leaveBy={"10:30 AM"}
             arrival={"11:45 PM"}
             weatherStats={[
               { label: "Rainfall", value: "20%" },

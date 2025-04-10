@@ -10,10 +10,6 @@ type WeatherStat = {
 type Props = {
   start: string;
   destination: string;
-  duration: string;
-  distance: string;
-  tolls: string;
-  leaveBy: string;
   arrival: string;
   weatherStats: WeatherStat[];
   onStartTrip: () => void;
@@ -24,13 +20,21 @@ type Props = {
   routeColors: string[];
 };
 
+const formatDuration = (seconds: number) => {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.round((seconds % 3600) / 60);
+  return `${hours > 0 ? `${hours} hr ` : ""}${minutes} min`;
+};
+
+const metersToMiles = (meters: number) => {
+  const miles = meters / 1609.34;
+  return `${miles.toFixed(1)} mi`;
+};
+
+
 const RouteSummaryCard = ({
   start,
   destination,
-  duration,
-  distance,
-  tolls,
-  leaveBy,
   arrival,
   weatherStats,
   onStartTrip,
@@ -38,12 +42,13 @@ const RouteSummaryCard = ({
   routes,
   selectedRouteIndex,
   setSelectedRouteIndex,
-  routeColors
+  routeColors,
 }: Props) => {
+  const selectedRoute = routes[selectedRouteIndex];
+
   return (
     <View style={styles.card}>
-      {/* Route Tabs */}
-      {routes && routes.length > 1 && (
+      {routes.length > 1 && (
         <View style={styles.tabRow}>
           {routes.map((_, index) => {
             const color = routeColors[index % routeColors.length];
@@ -53,13 +58,18 @@ const RouteSummaryCard = ({
                 onPress={() => setSelectedRouteIndex(index)}
                 style={[
                   styles.tab,
-                  { backgroundColor: selectedRouteIndex === index ? color : "#eee" },
+                  {
+                    backgroundColor:
+                      selectedRouteIndex === index ? color : "#eee",
+                  },
                 ]}
               >
                 <Text
                   style={[
                     styles.tabText,
-                    { color: selectedRouteIndex === index ? "#fff" : "#333" },
+                    {
+                      color: selectedRouteIndex === index ? "#fff" : "#333",
+                    },
                   ]}
                 >
                   {color.charAt(0).toUpperCase() + color.slice(1)}
@@ -71,11 +81,18 @@ const RouteSummaryCard = ({
       )}
 
       <ScrollView style={styles.scroll}>
-        <Text style={styles.routeTitle}>{start} → {destination}</Text>
-        <Text style={styles.detail}>Duration: {duration}</Text>
-        <Text style={styles.detail}>Distance: {distance}</Text>
-        <Text style={styles.detail}>Tolls: {tolls}</Text>
-        <Text style={styles.detail}>Leave by: {leaveBy}</Text>
+        <Text style={styles.routeTitle}>
+          {start} → {destination}
+        </Text>
+        <Text style={styles.detail}>
+          Duration: {selectedRoute?.duration ? formatDuration(selectedRoute.duration) : "N/A"}
+        </Text>
+        <Text style={styles.detail}>
+          Distance: {selectedRoute?.distance ? metersToMiles(selectedRoute.distance) : "N/A"}
+        </Text>
+        <Text style={styles.detail}>
+          Tolls: {selectedRoute?.tolls || "N/A"}
+        </Text>
         <Text style={styles.detail}>Arrival: {arrival}</Text>
 
         <Text style={styles.sectionHeader}>Weather Info</Text>
