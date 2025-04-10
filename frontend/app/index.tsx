@@ -22,11 +22,14 @@ import DateTimeSelector from "./DateTimeSelector";
 import * as Location from "expo-location";
 import Config from "../config";
 import RouteSummaryCard from "./RouteSummaryComponent";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 
 const baseUrl = "http://localhost:3000";
 
 export default function Index() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const [startAddress, setStartAddress] = useState("");
   const [destinationAddress, setDestinationAddress] = useState("");
@@ -183,7 +186,7 @@ export default function Index() {
       }
       if (mapRef.current && allCoordinates.length > 0) {
         mapRef.current.fitToCoordinates(allCoordinates, {
-          edgePadding: { top: 50, bottom: 50, left: 50, right: 50 },
+          edgePadding: { top: 30, bottom: 180, left: 30, right: 30 },
           animated: true,
         });
       }
@@ -192,162 +195,182 @@ export default function Index() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <MapView
-        ref={mapRef}
-        style={StyleSheet.absoluteFillObject}
-        initialRegion={{
-          latitude: startLat || 42.7296,
-          longitude: startLong || -73.6779,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        }}
-      >
-        {apiResponse?.mapData && apiResponse.mapData[selectedRouteIndex] && (
-          <React.Fragment>
-            <Polyline
-              coordinates={decodePolyline(apiResponse.mapData[selectedRouteIndex].polyline)}
-              strokeWidth={4}
-              strokeColor={routeColors[selectedRouteIndex % routeColors.length]}
-            />
-          {(() => {
-            const decoded = decodePolyline(apiResponse.mapData[selectedRouteIndex].polyline);
-            return (
-              <>
-                {decoded.length > 0 && (
+      <View style={styles.container}>
+        <View style={styles.mapContainer}>
+          <MapView
+            ref={mapRef}
+            style={StyleSheet.absoluteFillObject}
+            initialRegion={{
+              latitude: startLat || 42.7296,
+              longitude: startLong || -73.6779,
+              latitudeDelta: 0.01,
+              longitudeDelta: 0.01,
+            }}
+          >
+            {apiResponse?.mapData && apiResponse.mapData[selectedRouteIndex] && (
+              <React.Fragment>
+                <Polyline
+                  coordinates={decodePolyline(apiResponse.mapData[selectedRouteIndex].polyline)}
+                  strokeWidth={4}
+                  strokeColor={routeColors[selectedRouteIndex % routeColors.length]}
+                />
+              {(() => {
+                const decoded = decodePolyline(apiResponse.mapData[selectedRouteIndex].polyline);
+                return (
                   <>
-                    <Marker coordinate={decoded[0]} pinColor="green"/>
-                    <Marker coordinate={decoded[decoded.length - 1]} pinColor="red"/>
+                    {decoded.length > 0 && (
+                      <>
+                        <Marker coordinate={decoded[0]} pinColor="green"/>
+                        <Marker coordinate={decoded[decoded.length - 1]} pinColor="red"/>
+                      </>
+                    )}
                   </>
-                )}
-              </>
-            );
-          })()}
-          </React.Fragment>
-        )}
-      </MapView>
+                );
+              })()}
+              </React.Fragment>
+            )}
+          </MapView>
+        </View>
 
-      {!apiResponse && (
-        <View style={styles.overlayContainer}>
+        {!apiResponse && (
+          <View style={[styles.overlayContainer, { top: insets.top - 80 }]}>
           <View style={styles.inputsContainer}>
-            <Animated.View
-              style={{
-                opacity: slideAnim,
-                transform: [
-                  {
-                    translateY: slideAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [-20, 0],
-                    }),
-                  },
-                ],
-              }}
-            >
-              {showStartInput && (
-                <View style={[styles.inputWrapper, { marginBottom: 8 }]}>
-                  <LocationInput
-                    placeholder={startAddress || "Enter starting address"}
-                    setAddress={setStartAddress}
-                    setLat={setStartLat}
-                    setLong={setStartLong}
-                    inputRef={startInputRef}
-                    header=""
+              <Animated.View
+                style={{
+                  opacity: slideAnim,
+                  transform: [
+                    {
+                      translateY: slideAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [-20, 0],
+                      }),
+                    },
+                  ],
+                }}
+              >
+                {showStartInput && (
+                  <View style={[styles.inputWrapper, { marginBottom: 8 }]}>
+                    <LocationInput
+                      placeholder={startAddress || "Enter starting address"}
+                      setAddress={setStartAddress}
+                      setLat={setStartLat}
+                      setLong={setStartLong}
+                      inputRef={startInputRef}
+                      header=""
+                    />
+                  </View>
+                )}
+              </Animated.View>
+
+              <View style={styles.inputWrapper}>
+                <LocationInput
+                  placeholder="Enter destination address"
+                  setAddress={setDestinationAddress}
+                  setLat={setDestinationLat}
+                  setLong={setDestinationLong}
+                  inputRef={destinationInputRef}
+                  header=""
+                />
+              </View>
+            </View>
+
+            <View style={styles.routeButtonRow}>
+              <TouchableOpacity style={styles.button} onPress={getRoutes}>
+                <Text style={styles.buttonText}>Find Routes</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.button} onPress={clearOptions}>
+                <Text style={styles.buttonText}>Clear</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        <View style={styles.fixedInfoContainer}>
+          {!apiResponse ? (
+            <View style={styles.infoCard}>
+              <View style={styles.locationRow}>
+                <Text style={styles.locationTitle}>Troy, NY</Text>
+                <View style={[styles.changeStartButton, { width: 150 }]}>
+                  <Button
+                    title={isChangingStart ? "Cancel" : "Change Start"}
+                    onPress={toggleChangeStart}
+                    color="#fff"
                   />
                 </View>
-              )}
-            </Animated.View>
-
-            <View style={styles.inputWrapper}>
-              <LocationInput
-                placeholder="Enter destination address"
-                setAddress={setDestinationAddress}
-                setLat={setDestinationLat}
-                setLong={setDestinationLong}
-                inputRef={destinationInputRef}
-                header=""
-              />
+                <View style={styles.changeStartButton}>
+                  <Button
+                    title="Change Time"
+                    onPress={() => setShowTimePicker(true)}
+                    color="#fff"
+                  />
+                </View>
+              </View>
+              <Text style={styles.weatherInfo}>60° Mostly Clear</Text>
+              <Text style={styles.alertTitle}>Severe Weather Alerts</Text>
+              <Text style={styles.alertSubtitle}>Wind Advisory, Troy, NY</Text>
+              <View style={styles.weatherAlertsButton}>
+                <Button
+                  title="Weather Alerts"
+                  onPress={() => router.push("/settings")}
+                  color="#fff"
+                />
+              </View>
             </View>
-          </View>
-
-          <View style={styles.routeButtonRow}>
-            <TouchableOpacity style={styles.button} onPress={getRoutes}>
-              <Text style={styles.buttonText}>Find Routes</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={clearOptions}>
-              <Text style={styles.buttonText}>Clear</Text>
-            </TouchableOpacity>
-          </View>
+          ) : (
+            <RouteSummaryCard
+              start={startAddress}
+              destination={destinationAddress}
+              arrival={"11:45 PM"}
+              weatherStats={[
+                { label: "Rainfall", value: "20%" },
+                { label: "Snowfall", value: "0%" },
+                { label: "After sunset", value: "60%" },
+              ]}
+              onStartTrip={() => console.log("Start Trip")}
+              onCancel={() => setApiResponse(null)}
+              routes={apiResponse.mapData}
+              selectedRouteIndex={selectedRouteIndex}
+              setSelectedRouteIndex={setSelectedRouteIndex}
+              routeColors={routeColors}
+            />
+          )}
         </View>
-      )}
 
-      <View style={styles.fixedInfoContainer}>
-        {!apiResponse ? (
-          <View style={styles.infoCard}>
-            <View style={styles.locationRow}>
-              <Text style={styles.locationTitle}>Troy, NY</Text>
-              <View style={[styles.changeStartButton, { width: 150 }]}>
-                <Button
-                  title={isChangingStart ? "Cancel" : "Change Start"}
-                  onPress={toggleChangeStart}
-                  color="#fff"
-                />
-              </View>
-              <View style={styles.changeStartButton}>
-                <Button
-                  title="Change Time"
-                  onPress={() => setShowTimePicker(true)}
-                  color="#fff"
-                />
-              </View>
-            </View>
-            <Text style={styles.weatherInfo}>60° Mostly Clear</Text>
-            <Text style={styles.alertTitle}>Severe Weather Alerts</Text>
-            <Text style={styles.alertSubtitle}>Wind Advisory, Troy, NY</Text>
-            <View style={styles.weatherAlertsButton}>
-              <Button
-                title="Weather Alerts"
-                onPress={() => router.push("/settings")}
-                color="#fff"
-              />
-            </View>
-          </View>
-        ) : (
-          <RouteSummaryCard
-            start={startAddress}
-            destination={destinationAddress}
-            arrival={"11:45 PM"}
-            weatherStats={[
-              { label: "Rainfall", value: "20%" },
-              { label: "Snowfall", value: "0%" },
-              { label: "After sunset", value: "60%" },
-            ]}
-            onStartTrip={() => console.log("Start Trip")}
-            onCancel={() => setApiResponse(null)}
-            routes={apiResponse.mapData}
-            selectedRouteIndex={selectedRouteIndex}
-            setSelectedRouteIndex={setSelectedRouteIndex}
-            routeColors={routeColors}
-          />
-        )}
+        <DateTimeSelector
+          visible={showTimePicker}
+          onClose={() => setShowTimePicker(false)}
+          onConfirm={(date, time) => {
+            setSelectedDate(date);
+            setSelectedTime(time);
+            setShowTimePicker(false);
+          }}
+        />
       </View>
-
-      <DateTimeSelector
-        visible={showTimePicker}
-        onClose={() => setShowTimePicker(false)}
-        onConfirm={(date, time) => {
-          setSelectedDate(date);
-          setSelectedTime(time);
-          setShowTimePicker(false);
-        }}
-      />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#fff" },
-  overlayContainer: {
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  container: {
+    flex: 1,
+    flexDirection: "column",
+  },
+  mapContainer: {
+    flex: 1,
+  },
+  inputsOverlay: {
     position: "absolute",
     top: 40,
+    left: 16,
+    right: 16,
+    zIndex: 1,
+  },
+  overlayContainer: {
+    position: "absolute",
     left: 16,
     right: 16,
     zIndex: 1,

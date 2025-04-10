@@ -118,12 +118,12 @@ const RouteSummaryCard = ({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: "#fff",
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
     padding: 16,
     elevation: 4,
-    maxHeight: 400,
-  },
+    height: 250,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },  
   scroll: {
     maxHeight: 240,
   },
