@@ -58,6 +58,8 @@ export default function Index() {
   const [showStartInput, setShowStartInput] = useState(false);
   const slideAnim = useRef(new Animated.Value(0)).current;
 
+  const summaryAnim = useRef(new Animated.Value(0)).current;
+
   const toggleChangeStart = () => {
     const toValue = isChangingStart ? 0 : 1;
     if (toValue === 1) setShowStartInput(true);
@@ -164,10 +166,16 @@ export default function Index() {
         ...response.data,
         mapData: response.data.mapData ?? response.data.routes,
       });
-      setSelectedRouteIndex(0); // Show first route by default
+      Animated.timing(summaryAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }).start();      
+      setSelectedRouteIndex(0);
     } catch (err) {
       console.error("Route Fetch Error:", err);
       setApiResponse(null);
+      summaryAnim.setValue(0);
     } finally {
       setLoading(false);
     }
@@ -319,22 +327,38 @@ export default function Index() {
               </View>
             </View>
           ) : (
-            <RouteSummaryCard
-              start={startAddress}
-              destination={destinationAddress}
-              arrival={"11:45 PM"}
-              weatherStats={[
-                { label: "Rainfall", value: "20%" },
-                { label: "Snowfall", value: "0%" },
-                { label: "After sunset", value: "60%" },
-              ]}
-              onStartTrip={() => console.log("Start Trip")}
-              onCancel={() => setApiResponse(null)}
-              routes={apiResponse.mapData}
-              selectedRouteIndex={selectedRouteIndex}
-              setSelectedRouteIndex={setSelectedRouteIndex}
-              routeColors={routeColors}
-            />
+            <Animated.View
+              style={{
+                transform: [
+                  {
+                    translateY: summaryAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [300, 0], // slide up from bottom
+                    }),
+                  },
+                ],
+              }}
+            >
+              <RouteSummaryCard
+                start={startAddress}
+                destination={destinationAddress}
+                arrival={"11:45 PM"}
+                weatherStats={[
+                  { label: "Rainfall", value: "20%" },
+                  { label: "Snowfall", value: "0%" },
+                  { label: "After sunset", value: "60%" },
+                ]}
+                onStartTrip={() => console.log("Start Trip")}
+                onCancel={() => {
+                  summaryAnim.setValue(0); // reset animation
+                  setApiResponse(null);
+                }}
+                routes={apiResponse.mapData}
+                selectedRouteIndex={selectedRouteIndex}
+                setSelectedRouteIndex={setSelectedRouteIndex}
+                routeColors={routeColors}
+              />
+            </Animated.View>
           )}
         </View>
 
