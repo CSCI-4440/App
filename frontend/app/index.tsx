@@ -25,7 +25,7 @@ import * as Location from 'expo-location'
 import Config from '../config'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-const baseUrl = 'http://129.161.78.18:3000'
+const baseUrl = 'http://129.161.37.142:3000'
 
 export default function Index() {
 	const router = useRouter()
