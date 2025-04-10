@@ -15,6 +15,7 @@ class Manager {
     this.routes.push(route);
   }
 
+
   /**
    * Calculate a score for a route based on weather, time, and distance.
    * We want routes with good weather (high weatherScore) and lower time and distance.

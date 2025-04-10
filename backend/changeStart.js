@@ -77,6 +77,7 @@ router.get("/api/changeStartRoutes", async (req, res) => {
         weatherScore: r.weatherScore,
         weatherType: r.weatherType,
         score: r.score,
+        sunset: r.sunsetTime
       });
     }
 
@@ -97,9 +98,10 @@ router.get("/api/changeStartRoutes", async (req, res) => {
       test: "cooked", // custom/test field
       polyline: r.polyline,
       breakDown: r.weatherBreakdown,
+      sunset: r.sunsetTime
     }));
 
-    // console.log("Formatted text: " , formattedRoutes)
+    console.log("Formatted text: " , formattedRoutes)
 
     res.json({ routes: formattedRoutes, mapData: mapDetails });
   } catch (error) {

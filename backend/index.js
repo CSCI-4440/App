@@ -55,6 +55,8 @@ app.get("/api/routes", async (req, res) => {
     const response = await axios.post(url, body, { headers });
     const routes = [];
     const responseRoutes = response.data.routes;
+    console.log("PRININIGNIGNIGNG")
+    console.log(responseRoutes)
     for (const route of responseRoutes) {
       const legs = route.legs[0];
       const r = new Route(legs);
@@ -65,6 +67,7 @@ app.get("/api/routes", async (req, res) => {
         distanceMeters: r.distanceMeters,
         durationSeconds: r.durationSeconds,
         waypoints: waypoints,
+        sunsetTime: r.sunsetTime
       });
     }
     const bestRoutes = Manager.getBestRoutes(routes);
