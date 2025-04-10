@@ -154,6 +154,9 @@ const RouteSummaryCard = ({
 					Distance: {selectedRoute?.distance ? metersToMiles(selectedRoute.distance) : 'N/A'}
 				</Text>
 				<Text style={styles.detail}>
+  					Departure: {selectedRoute?.departure}
+				</Text>
+				<Text style={styles.detail}>
 					Arrival:{' '}
 					{selectedRoute?.duration
 						? computeArrivalTime(currentTime, selectedRoute.duration)
