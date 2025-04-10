@@ -42,8 +42,8 @@ class Location {
             // console.log(response.data.city.timezone);
 
             for (let hour of fourcast) {
-                const date = new Date(hour.dt_txt);
-                this.forecast.set(date, hour.weather[0].description);
+                const date = new Date(hour.dt_txt.replace(" ", "T") + "Z");
+                this.forecast.set(date.toISOString(), hour.weather[0].description);
             }
 
         } catch (error) {
@@ -55,7 +55,7 @@ class Location {
     getCondition(date) 
     {
         let roundedDate = this.roundDateToNearestHour(date);
-        return this.forecast[roundedDate];
+        return this.forecast.get(roundedDate.toISOString());
     }
 }
 //export the Location class so it can be used in other files

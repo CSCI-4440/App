@@ -81,6 +81,17 @@ class Route {
     return this.startAddress;
   }
 
+
+  set setStartDate(newDate){
+    this.startDate = newDate;
+  }
+
+  set updateTimes(timeDiffHours){
+    for (let time in this.times){
+      time = this.updateTime(time, timeDiffHours * 60); 
+    }
+  }
+
   roundDateToNearestHour(date) {
     const rounded = new Date(date); // Clone the original date to avoid mutating it
     const minutes = rounded.getMinutes();

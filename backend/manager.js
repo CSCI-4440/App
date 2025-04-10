@@ -5,6 +5,7 @@ class Manager {
   constructor() {
     // Store all routes here
     this.routes = [];
+    this.routesDiffTime = [];
   }
 
   /**
@@ -14,6 +15,11 @@ class Manager {
   addRoute(route) {
     this.routes.push(route);
   }
+
+  addRoutesDiffTime() {
+    
+  }
+
 
   /**
    * Calculate a score for a route based on weather, time, and distance.
@@ -61,6 +67,8 @@ class Manager {
     // Compute and attach a score for each route.
     this.routes.forEach(route => {
       route.score = Manager.scoreRoute(route, maxTime, maxDistance);
+      console.log(route.score);
+      console.log(route.weatherConditions)
     });
 
     // Sort the routes by score (highest first) and return the best route.

@@ -49,22 +49,8 @@ export default function Index() {
   const routeColors = ["blue", "green", "orange", "red", "purple"];
 
   function toGoogleTime(dateStr: string, time: Date): string {
-    console.log("date",dateStr)
-    console.log(time)
-    const [year, month, day] = dateStr.split('-').map(Number);
-  
-    const utcDate = new Date(Date.UTC(
-      year,
-      month - 1,
-      day,
-      time.getHours(),
-      time.getMinutes(),
-      time.getSeconds()
-    ));
-    // return "2025-04-9T22:43:22.000Z"
-    console.log("herere")
-    const t = new Date(utcDate.getTime() + 10 * 60 * 1000)
-    console.log("hgeage")
+    const t = new Date(time.getTime() + 10 * 60 * 1000)
+
     return t.toISOString();
   }
 

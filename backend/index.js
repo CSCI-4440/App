@@ -19,19 +19,13 @@ app.use(express.json());
 app.get("/api/getRoutes", async (req, res) => {
     console.log("Calling the Change Start API!");
     const { startLat, startLong, destinationLat, destinationLong, startTime, startDate, googleTime } = req.query;
-    console.log("Start Latitude:", startLat);
-    console.log("Start Longitude:", startLong);
-    console.log("Destination Latitude:", destinationLat);
-    console.log("Destination Longitude:", destinationLong);
-    console.log("Start Time:", startTime);
-    console.log("Start Date:", startDate);
-    console.log("Google Time:", googleTime);
 
     if (!startLat || !startLong || !destinationLat || !destinationLong || !googleTime || !startTime || !startDate) {
       return res.status(400).json({ error: "Missing required parameters" });
     }
 
-    const dateObject = new Date(startTime);
+    const dateObject = new Date(googleTime);
+    console.log("This is the current time:", dateObject);
    
     const url = "https://routes.googleapis.com/directions/v2:computeRoutes";
     const headers = {
