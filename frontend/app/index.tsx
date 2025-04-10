@@ -415,7 +415,7 @@ export default function Index() {
 									/>
 								</View>
 							</View>
-							<Text style={styles.weatherInfo}>60° Mostly Clear</Text>
+							<Text style={styles.weatherInfo}>50°, Cloudy</Text>
 							<Text style={styles.alertTitle}>Severe Weather Alerts</Text>
 							<Text style={styles.alertSubtitle}>Wind Advisory, Troy, NY</Text>
 							<View style={styles.weatherAlertsButton}>
@@ -429,7 +429,7 @@ export default function Index() {
 									{
 										translateY: summaryAnim.interpolate({
 											inputRange: [0, 1],
-											outputRange: [300, 0], // slide up from bottom
+											outputRange: [300, 0],
 										}),
 									},
 								],
