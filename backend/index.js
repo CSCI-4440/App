@@ -114,6 +114,7 @@ app.get("/api/getRoutes", async (req, res) => {
         weatherBreakdown: bestTimedRoute.weatherBreakdown,
         score: bestTimedRoute.score,
         departure: bestTimedRoute.startDate.toISOString(),
+        sunsetTime: bestTimedRoute.sunsetTime
       });
       bestRoutes.push(bestTimedRoute);
       

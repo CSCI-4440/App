@@ -184,7 +184,15 @@ const getPercentage = (
 	  {
 		percentage=percentage/10;
 	  }
-	//   console.log("DURATION (minutes):", durationMin);
+
+
+	  const percentAfterSunset = 
+		((arrivalTimeInMinutes - sunsetTimeInMinutes) / 
+		(arrivalTimeInMinutes - currentTimeInMinutes)) * 100;
+		console.log(`After sunset: ${percentAfterSunset.toFixed(1)}%`);
+	  return `${percentAfterSunset.toFixed(1)}%`;
+
+	  console.log("DURATION (minutes):", durationMin);
 	  console.log(`After sunset: ${percentage.toFixed(1)}%`);
   
 	  return `${percentage.toFixed(1)}%`;
