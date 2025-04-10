@@ -25,7 +25,7 @@ import Config from '../config'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 
-const baseUrl = "http://129.161.77.77:3000"
+const baseUrl = "http://129.161.138.122:3000"
 
 export default function Index() {
 	const router = useRouter();
@@ -194,6 +194,7 @@ export default function Index() {
 			const response = await axios.get(
 				`${baseUrl}/api/getRoutes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}&startTime=${selectedTime}&startDate=${selectedDate}&googleTime=${googleTime}`
 			);
+			
 			setApiResponse({
 				...response.data,
 				mapData: response.data.mapData ?? response.data.routes,

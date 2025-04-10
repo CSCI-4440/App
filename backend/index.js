@@ -80,7 +80,8 @@ app.get("/api/getRoutes", async (req, res) => {
           end: r.locations[r.locations.length - 1],
           weatherScore: r.weatherScore,
           weatherType: r.weatherType,
-          score: r.score
+          score: r.score,
+          departure: r.startDate.toISOString()
         });
       }
       
@@ -91,6 +92,18 @@ app.get("/api/getRoutes", async (req, res) => {
 
       manager.addRoutesDiffTime();
       const bestTimedRoute = manager.getBestTimedRoute()[0];
+
+      mapDetails.push({
+        distance: bestTimedRoute.distance,
+        duration: bestTimedRoute.time,
+        polyline: bestTimedRoute.polyline,
+        start: bestTimedRoute.locations[0],
+        end: bestTimedRoute.locations[bestTimedRoute.locations.length - 1],
+        weatherScore: bestTimedRoute.weatherScore,
+        weatherType: bestTimedRoute.weatherType,
+        score: bestTimedRoute.score,
+        departure: bestTimedRoute.startDate.toISOString()
+      });
       bestRoutes.push(bestTimedRoute);
       
       
@@ -104,10 +117,11 @@ app.get("/api/getRoutes", async (req, res) => {
           score: r.score,
           polyline: r.polyline,
           breakDown: r.weatherBreakdown,
-          departure: r.startDate
+          departure: r.startDate.toISOString()
         }));
 
-        console.log("Formatted:", formattedRoutes);
+        console.log(formattedRoutes.length);
+        // console.log("Formatted:", formattedRoutes);
   
       res.json({ routes: formattedRoutes, mapData: mapDetails });
     } catch (error) {

@@ -39,27 +39,33 @@ class Location {
         const API_KEY = process.env.OPENWEATHER_API_KEY; 
 
 
-    //construct the API request URL
-    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${this.latitude}&lon=${this.longitude}&units=metric&appid=${API_KEY}`;
-    try {
-      //make the API call
-      const response = await axios.get(url);
+        //construct the API request URL
+        const url = `https://pro.openweathermap.org/data/2.5/forecast/hourly?lat=${this.latitude}&lon=${this.longitude}&appid=${API_KEY}`;
+        
+        //construct the API request URL
+        try {
+            //make the API call
+            const response = await axios.get(url);
 
-      //extract and store the weather condition description
-      this.weatherCondition = response.data.weather[0].description;
-      //log the result
-      console.log(
-        `Weather condition at (${this.latitude}, ${this.longitude}): ${this.weatherCondition}`
-      );
-    } catch (error) {
-      //handle errors
-      console.error("Error fetching weather condition:", error.message);
+            const fourcast = response.data.list;
+            // console.log(response.data.city.timezone);
+
+            for (let hour of fourcast) {
+                const date = new Date(hour.dt_txt.replace(" ", "T") + "Z");
+                this.forecast.set(date.toISOString(), hour.weather[0].description);
+            }
+
+        } catch (error) {
+            //handle errors
+            console.error("Error fetching weather condition:", error.message);
+        }
     }
-  }
-  //getter method to retrieve the stored weather condition
-  getCondition() {
-    return this.weatherCondition;
-  }
+    //getter method to retrieve the stored weather condition
+    getCondition(date) 
+    {
+        let roundedDate = this.roundDateToNearestHour(date);
+        return this.forecast.get(roundedDate.toISOString());
+    }
 }
 //export the Location class so it can be used in other files
 module.exports = Location;
