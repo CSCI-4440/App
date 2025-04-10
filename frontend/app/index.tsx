@@ -53,6 +53,9 @@ export default function Index() {
   const [showStartInput, setShowStartInput] = useState(false);
   const slideAnim = useRef(new Animated.Value(0)).current;
 
+  const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
+
+
   const toggleChangeStart = () => {
     const toValue = isChangingStart ? 0 : 1;
     if (toValue === 1) setShowStartInput(true);
@@ -202,20 +205,21 @@ const getRoutes = async () => {
           longitudeDelta: 0.01,
         }}
       >
-        {apiResponse?.mapData?.map((route: any, index: number) => (
-          
-          <React.Fragment key={index}>
-            {route.polyline && (
-              <Polyline
-                coordinates={decodePolyline(route.polyline)}
-                strokeWidth={4}
-                strokeColor={routeColors[index % routeColors.length]}
-              />
+        {apiResponse?.mapData && apiResponse.mapData[selectedRouteIndex] && (
+          <React.Fragment key={selectedRouteIndex}>
+            <Polyline
+              coordinates={decodePolyline(apiResponse.mapData[selectedRouteIndex].polyline)}
+              strokeWidth={4}
+              strokeColor={routeColors[selectedRouteIndex % routeColors.length]}
+            />
+            {apiResponse.mapData[selectedRouteIndex].start && (
+              <Marker coordinate={apiResponse.mapData[selectedRouteIndex].start} />
             )}
-            {route.start && <Marker coordinate={route.start} />}
-            {route.end && <Marker coordinate={route.end} />}
+            {apiResponse.mapData[selectedRouteIndex].end && (
+              <Marker coordinate={apiResponse.mapData[selectedRouteIndex].end} />
+            )}
           </React.Fragment>
-        ))}
+        )}
       </MapView>
 
       {!apiResponse && (
@@ -318,6 +322,10 @@ const getRoutes = async () => {
             ]}
             onStartTrip={() => console.log("Start Trip")}
             onCancel={() => setApiResponse(null)}
+            routes={apiResponse.mapData}
+            selectedRouteIndex={selectedRouteIndex}
+            setSelectedRouteIndex={setSelectedRouteIndex}
+            routeColors={routeColors}
           />
         )}
       </View>

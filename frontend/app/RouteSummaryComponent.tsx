@@ -1,5 +1,11 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import { Text } from "react-native-paper";
+
+type WeatherStat = {
+  label: string;
+  value: string;
+};
 
 type Props = {
   start: string;
@@ -9,12 +15,16 @@ type Props = {
   tolls: string;
   leaveBy: string;
   arrival: string;
-  weatherStats: { label: string; value: string }[];
-  onCancel: () => void;
+  weatherStats: WeatherStat[];
   onStartTrip: () => void;
+  onCancel: () => void;
+  routes: any[];
+  selectedRouteIndex: number;
+  setSelectedRouteIndex: (index: number) => void;
+  routeColors: string[];
 };
 
-export default function RouteSummaryCard({
+const RouteSummaryCard = ({
   start,
   destination,
   duration,
@@ -23,118 +33,146 @@ export default function RouteSummaryCard({
   leaveBy,
   arrival,
   weatherStats,
-  onCancel,
   onStartTrip,
-}: Props) {
+  onCancel,
+  routes,
+  selectedRouteIndex,
+  setSelectedRouteIndex,
+  routeColors
+}: Props) => {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>
-        {start} to {destination}
-      </Text>
-
-      <View style={styles.tabRow}>
-        <Text style={styles.activeTab}>Best Weather</Text>
-        <Text style={styles.inactiveTab}>Alternative Route</Text>
-      </View>
-
-      <Text style={styles.stats}>
-        {duration} <Text style={styles.subText}>({distance})</Text>
-      </Text>
-      <Text style={styles.stats}>{tolls}</Text>
-      <Text style={styles.stats}>Leave By: {leaveBy}</Text>
-      <Text style={styles.stats}>Arrival Time: {arrival}</Text>
-
-      <Text style={styles.forecastHeader}>Details about the forecast</Text>
-      {weatherStats.map((item, index) => (
-        <View key={index} style={styles.row}>
-          <Text style={styles.weatherLabel}>{item.label}</Text>
-          <Text style={styles.weatherValue}>{item.value}</Text>
+    <View style={styles.card}>
+      {/* Route Tabs */}
+      {routes && routes.length > 1 && (
+        <View style={styles.tabRow}>
+          {routes.map((_, index) => {
+            const color = routeColors[index % routeColors.length];
+            return (
+              <TouchableOpacity
+                key={index}
+                onPress={() => setSelectedRouteIndex(index)}
+                style={[
+                  styles.tab,
+                  { backgroundColor: selectedRouteIndex === index ? color : "#eee" },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.tabText,
+                    { color: selectedRouteIndex === index ? "#fff" : "#333" },
+                  ]}
+                >
+                  {color.charAt(0).toUpperCase() + color.slice(1)}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
-      ))}
+      )}
 
-      <TouchableOpacity style={styles.startButton} onPress={onStartTrip}>
-        <Text style={styles.startButtonText}>Start Trip</Text>
-      </TouchableOpacity>
+      <ScrollView style={styles.scroll}>
+        <Text style={styles.routeTitle}>{start} → {destination}</Text>
+        <Text style={styles.detail}>Duration: {duration}</Text>
+        <Text style={styles.detail}>Distance: {distance}</Text>
+        <Text style={styles.detail}>Tolls: {tolls}</Text>
+        <Text style={styles.detail}>Leave by: {leaveBy}</Text>
+        <Text style={styles.detail}>Arrival: {arrival}</Text>
 
-      <TouchableOpacity style={styles.cancelButton} onPress={onCancel}>
-        <Text style={styles.cancelButtonText}>Cancel</Text>
-      </TouchableOpacity>
+        <Text style={styles.sectionHeader}>Weather Info</Text>
+        {weatherStats.map((stat, index) => (
+          <Text key={index} style={styles.detail}>
+            {stat.label}: {stat.value}
+          </Text>
+        ))}
+      </ScrollView>
+
+      <View style={styles.buttonRow}>
+        <TouchableOpacity style={styles.buttonStart} onPress={onStartTrip}>
+          <Text style={styles.buttonText}>Start Trip</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.buttonCancel} onPress={onCancel}>
+          <Text style={styles.buttonText}>Cancel</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: "#f8fbfd",
+  card: {
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
     padding: 16,
-    borderTopWidth: 1,
-    borderColor: "#ccc",
+    elevation: 4,
+    maxHeight: 400,
   },
-  title: {
+  scroll: {
+    maxHeight: 240,
+  },
+  routeTitle: {
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 8,
   },
-  tabRow: {
-    flexDirection: "row",
-    marginBottom: 12,
-  },
-  activeTab: {
-    backgroundColor: "#555",
-    color: "#fff",
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 6,
-    marginRight: 10,
-  },
-  inactiveTab: {
-    backgroundColor: "#ddd",
-    color: "#444",
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 6,
-  },
-  stats: {
+  detail: {
     fontSize: 16,
     marginBottom: 4,
   },
-  subText: {
-    color: "#888",
-  },
-  forecastHeader: {
-    marginTop: 12,
-    fontWeight: "bold",
+  sectionHeader: {
     fontSize: 16,
+    fontWeight: "bold",
+    marginTop: 12,
+    marginBottom: 4,
   },
-  row: {
+  buttonRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 6,
-  },
-  weatherLabel: {
-    fontSize: 15,
-  },
-  weatherValue: {
-    fontSize: 15,
-  },
-  startButton: {
-    backgroundColor: "#007bff",
-    paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: "center",
     marginTop: 16,
   },
-  startButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-  cancelButton: {
-    marginTop: 10,
+  buttonStart: {
+    backgroundColor: "#28a745",
+    padding: 12,
+    borderRadius: 8,
+    flex: 1,
+    marginRight: 8,
     alignItems: "center",
   },
-  cancelButtonText: {
-    color: "#007bff",
-    fontSize: 16,
+  buttonCancel: {
+    backgroundColor: "#dc3545",
+    padding: 12,
+    borderRadius: 8,
+    flex: 1,
+    marginLeft: 8,
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  tabRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+  tab: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: "#eee",
+    marginHorizontal: 4,
+    borderRadius: 20,
+  },
+  activeTab: {
+    backgroundColor: "#007bff",
+  },
+  tabText: {
+    fontSize: 14,
+    color: "#333",
+  },
+  activeTabText: {
+    color: "#fff",
+    fontWeight: "bold",
   },
 });
+
+export default RouteSummaryCard;
