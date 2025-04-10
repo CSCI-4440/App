@@ -56,16 +56,9 @@ export default function Index() {
 	const routeColors = ['blue', 'green', 'orange', 'red', 'purple']
 	const [selectedRouteIndex, setSelectedRouteIndex] = useState(0)
 
-  function toGoogleTime(dateStr: string, time: Date): string {
-    const t = new Date(time.getTime() + 10 * 60 * 1000)
-
-    return t.toISOString();
-  }
-
 	const [isChangingStart, setIsChangingStart] = useState(false)
 	const [showStartInput, setShowStartInput] = useState(false)
 	const slideAnim = useRef(new Animated.Value(0)).current
-
 
 	const summaryAnim = useRef(new Animated.Value(0)).current
 
@@ -85,53 +78,36 @@ export default function Index() {
 	}
 
 	const decodePolyline = (encoded: string) => {
-		let points = [];
+		let points = []
 		let index = 0,
-		  lat = 0,
-		  lng = 0;
+			lat = 0,
+			lng = 0
 		while (index < encoded.length) {
-		  let b, shift = 0, result = 0;
-		  do {
-			b = encoded.charCodeAt(index++) - 63;
-			result |= (b & 0x1f) << shift;
-			shift += 5;
-		  } while (b >= 0x20);
-		  const dlat = (result & 1) ? ~(result >> 1) : result >> 1;
-		  lat += dlat;
-		  shift = 0;
-		  result = 0;
-		  do {
-			b = encoded.charCodeAt(index++) - 63;
-			result |= (b & 0x1f) << shift;
-			shift += 5;
-		  } while (b >= 0x20);
-		  const dlng = (result & 1) ? ~(result >> 1) : result >> 1;
-		  lng += dlng;
-		  points.push({ latitude: lat / 1e5, longitude: lng / 1e5 });
+			let b,
+				shift = 0,
+				result = 0
+			do {
+				b = encoded.charCodeAt(index++) - 63
+				result |= (b & 0x1f) << shift
+				shift += 5
+			} while (b >= 0x20)
+			const dlat = result & 1 ? ~(result >> 1) : result >> 1
+			lat += dlat
+
+			shift = 0
+			result = 0
+			do {
+				b = encoded.charCodeAt(index++) - 63
+				result |= (b & 0x1f) << shift
+				shift += 5
+			} while (b >= 0x20)
+			const dlng = result & 1 ? ~(result >> 1) : result >> 1
+			lng += dlng
+
+			points.push({ latitude: lat / 1e5, longitude: lng / 1e5 })
 		}
-		return points;
-	};
-
-    //   try {
-    //     if ( !selectedDate ){
-    //       console.error("date is not found")
-    //     }
-
-    //     if ( !selectedTime ){
-    //       console.error("time is not found")
-    //     }
-    //     const googleTime = toGoogleTime(selectedDate, selectedTime);
-
-        
-    //     const response = await axios.get(
-    //       `${baseUrl}/api/getRoutes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}&startTime=${selectedTime}&startDate=${selectedDate}&googleTime=${googleTime}`
-    //     );
-    //     setApiResponse(response.data);
-    //   } catch (error) {
-    //     console.error("Error fetching route data:", error);
-    //     setApiResponse(null);
-    //   }
-
+		return points
+	}
 
 	const clearOptions = () => {
 		setStartAddress('')
@@ -211,24 +187,10 @@ export default function Index() {
 			setLoading(false)
 		}
 	}
-    
-      <DateTimeSelector
-        visible={showTimePicker}
-        onClose={() => setShowTimePicker(false)}
-        onConfirm={(date, time) => {
-          
-          console.log("Selected date:", date);
-          console.log("Selected time:", time.toLocaleTimeString());
-          setSelectedDate(formattedToday);
-          setSelectedTime(time);
-          setShowTimePicker(false);
-      }}
-    />
 
 	useEffect(() => {
 		getLocation()
 	}, [])
-
 
 	useEffect(() => {
 		if (apiResponse?.mapData) {
@@ -427,111 +389,103 @@ export default function Index() {
 }
 
 const styles = StyleSheet.create({
-  routeScrollWrapper: {
-    maxHeight: 200,      
-    marginTop: 10,
-  },  
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  overlayContainer: {
-    position: "absolute",
-    top: 40,
-    left: 16,
-    right: 16,
-    zIndex: 1,
-  },
-  inputWrapper: {
-    backgroundColor: "transparent",
-    padding: 10,
-    borderRadius: 10,
-    marginBottom: 10,
-    elevation: 3,
-  },  
-  routeButtonRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 10,
-    backgroundColor: "#007bff",
-    borderRadius: 10,
-    padding: 10,
-  },
-  routesContainer: {
-    marginTop: 10,
-  },
-  routeCard: {
-    backgroundColor: "#fff",
-    borderColor: "#ddd",
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 15,
-    marginBottom: 10,
-  },
-  routeTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 5,
-  },
-  fixedInfoContainer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    zIndex: 2,
-  },
-  infoCard: {
-    backgroundColor: "#fff",
-    width: "100%",
-    padding: 16,
-  },
-  locationRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  locationTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  weatherInfo: {
-    fontSize: 16,
-    marginBottom: 8,
-  },
-  alertTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "red",
-    marginBottom: 4,
-  },
-  alertSubtitle: {
-    fontSize: 14,
-    marginBottom: 16,
-  },
-  changeStartButton: {
-    backgroundColor: "#007bff",
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  weatherAlertsButton: {
-    backgroundColor: "#007bff",
-    borderRadius: 12,
-    overflow: "hidden",
-    marginTop: 8,
-  },
-  button: {
-    flex: 1,
-    backgroundColor: "#007bff",
-    paddingVertical: 10,
-    marginHorizontal: 5,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-  
-});
+	safeArea: {
+		flex: 1,
+		backgroundColor: '#fff',
+	},
+	container: {
+		flex: 1,
+		flexDirection: 'column',
+	},
+	mapContainer: {
+		flex: 1,
+	},
+	inputsOverlay: {
+		position: 'absolute',
+		top: 40,
+		left: 16,
+		right: 16,
+		zIndex: 1,
+		borderRadius: 16,
+	},
+	overlayContainer: {
+		position: 'absolute',
+		left: 16,
+		right: 16,
+		zIndex: 1,
+	},
+	inputsContainer: {
+		flexDirection: 'column',
+		padding: 0,
+		margin: 0,
+		borderRadius: 16,
+	},
+	inputWrapper: {
+		backgroundColor: 'transparent',
+		paddingVertical: 10,
+		paddingHorizontal: 10,
+		borderRadius: 16,
+		marginBottom: 0,
+		elevation: 3,
+	},
+	routeButtonRow: {
+		flexDirection: 'row',
+		justifyContent: 'space-between',
+		marginBottom: 10,
+		backgroundColor: '#007bff',
+		borderRadius: 16,
+		padding: 10,
+	},
+	button: {
+		flex: 1,
+		backgroundColor: '#007bff',
+		paddingVertical: 10,
+		marginHorizontal: 5,
+		borderRadius: 16,
+		alignItems: 'center',
+	},
+	buttonText: {
+		color: '#fff',
+		fontWeight: 'bold',
+		fontSize: 16,
+	},
+	fixedInfoContainer: {
+		position: 'absolute',
+		bottom: 0,
+		left: 0,
+		right: 0,
+		zIndex: 2,
+		borderRadius: 16,
+	},
+	infoCard: {
+		backgroundColor: '#fff',
+		width: '100%',
+		padding: 16,
+	},
+	locationRow: {
+		flexDirection: 'row',
+		justifyContent: 'space-between',
+		alignItems: 'center',
+		marginBottom: 8,
+	},
+	locationTitle: { fontSize: 18, fontWeight: 'bold' },
+	weatherInfo: { fontSize: 16, marginBottom: 8 },
+	alertTitle: {
+		fontSize: 16,
+		fontWeight: 'bold',
+		color: 'red',
+		marginBottom: 4,
+	},
+	alertSubtitle: { fontSize: 14, marginBottom: 16 },
+	changeStartButton: {
+		backgroundColor: '#007bff',
+		borderRadius: 16,
+		overflow: 'hidden',
+	},
+	weatherAlertsButton: {
+		backgroundColor: '#007bff',
+		borderRadius: 16,
+		overflow: 'hidden',
+		marginTop: 8,
+	},
+})

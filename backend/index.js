@@ -14,96 +14,75 @@ app.use(cors());
 
 app.use(express.json());
 
-app.get("/api/getRoutes", async (req, res) => {
-    console.log("Calling the Change Start API!");
-    const { startLat, startLong, destinationLat, destinationLong, startTime, startDate, googleTime } = req.query;
+app.get("/test", async (req, res) => {
+  res.send("hello");
+});
 
-    if (!startLat || !startLong || !destinationLat || !destinationLong || !googleTime || !startTime || !startDate) {
-      return res.status(400).json({ error: "Missing required parameters" });
+app.get("/api/routes", async (req, res) => {
+  console.log("Calling the API!");
+  const { startLat, startLong, destinationLat, destinationLong } = req.query;
+  if (!startLat || !startLong || !destinationLat || !destinationLong) {
+    return res.status(400).json({ error: "Missing required parameters" });
+  }
+  const url = "https://routes.googleapis.com/directions/v2:computeRoutes";
+  const headers = {
+    "Content-Type": "application/json",
+    "X-Goog-Api-Key": API_KEY,
+    "X-Goog-FieldMask": "routes.duration,routes.distanceMeters,routes.legs",
+  };
+  const body = {
+    origin: {
+      location: {
+        latLng: {
+          latitude: parseFloat(startLat),
+          longitude: parseFloat(startLong),
+        },
+      },
+    },
+    destination: {
+      location: {
+        latLng: {
+          latitude: parseFloat(destinationLat),
+          longitude: parseFloat(destinationLong),
+        },
+      },
+    },
+    travelMode: "DRIVE",
+    routingPreference: "TRAFFIC_AWARE",
+    computeAlternativeRoutes: true,
+  };
+  try {
+    const response = await axios.post(url, body, { headers });
+    const routes = [];
+    const responseRoutes = response.data.routes;
+    console.log("PRININIGNIGNIGNG")
+    console.log(responseRoutes)
+    for (const route of responseRoutes) {
+      const legs = route.legs[0];
+      const r = new Route(legs);
+      const waypoints = await r.getWaypointsEveryXMeters();
+      routes.push({
+        startAddress: r.startAddress,
+        destinationAddress: r.destinationAddress,
+        distanceMeters: r.distanceMeters,
+        durationSeconds: r.durationSeconds,
+        waypoints: waypoints,
+        sunsetTime: r.sunsetTime
+      });
     }
+    const bestRoutes = Manager.getBestRoutes(routes);
+    res.json({ routes: bestRoutes });
+  } catch (error) {
+    console.error("Error fetching route data:", error.message);
+    res
+      .status(error.response?.status || 500)
+      .json({ error: "Failed to fetch routes" });
+  }
+});
 
-    const dateObject = new Date(googleTime);
-   
-    const url = "https://routes.googleapis.com/directions/v2:computeRoutes";
-    const headers = {
-      "Content-Type": "application/json",
-      "X-Goog-Api-Key": API_KEY,
-      "X-Goog-FieldMask": "routes.duration,routes.distanceMeters,routes.legs,routes.polyline"
-    };
-
-    const body = {
-      origin: { location: { latLng: { latitude: parseFloat(startLat), longitude: parseFloat(startLong) } } },
-      destination: { location: { latLng: { latitude: parseFloat(destinationLat), longitude: parseFloat(destinationLong) } } },
-      travelMode: "DRIVE",
-      routingPreference: "TRAFFIC_AWARE",
-      computeAlternativeRoutes: true,
-      departureTime: googleTime
-    };
-
-    try {
-      
-      const response = await axios.post(url, body, { headers });
-      console.log("Google API Call finished");
-      const responseRoutes = response.data.routes;
-      const routes = [];
-      const mapDetails = [];
-      const manager = new Manager();
-      
-      for (const route of responseRoutes) {
-        const legs = route.legs[0];
-        console.log("Added a route:");
-        const r = new Route(legs, dateObject);
-        
-        // Set polyline directly
-        r.polyline = route.polyline.encodedPolyline;
-        
-        // Enrich with weather scoring
-        await r.getWaypointsEveryXMeters();
-        r.calculateWeatherScore();
-  
-        // Push Route instance to scoring system
-        routes.push(r);
-        manager.addRoute(r);
-
-  
-        // Optional map data details
-        mapDetails.push({
-          distance: r.distance,
-          duration: r.time,
-          polyline: r.polyline,
-          start: r.locations[0],
-          end: r.locations[r.locations.length - 1],
-          weatherScore: r.weatherScore,
-          weatherType: r.weatherType,
-          score: r.score
-        });
-      }
-    
-      let bestRoutes = [manager.getBestRoute()];      
-
-      manager.addRoutesDiffTime();
-      const bestTimedRoute = manager.getBestTimedRoute()[0];
-      bestRoutes.push(bestTimedRoute);
-      
-      const formattedRoutes = bestRoutes.map(r => ({
-          startAddress: r.startAddress,
-          destinationAddress: r.destinationAddress,
-          distance: r.distance,
-          time: r.time,
-          weatherScore: r.weatherScore,
-          weatherType: r.weatherType,
-          score: r.score,
-          polyline: r.polyline,
-          breakDown: r.weatherBreakdown,
-          departure: r.startDate
-        }));
-  
-      res.json({ routes: formattedRoutes, mapData: mapDetails });
-    } catch (error) {
-      // console.error("Error fetching route data (Change Start):", error.response.data , error.response.status, error.response.request, error.request.stack);
-      res.status(error.response?.status || 500).json({ error: "Failed to fetch routes" });
-    }
-  });
+// Import and mount the changeStart router
+const changeStartRouter = require("./changeStart");
+app.use(changeStartRouter);
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on http://localhost:${PORT}`);
