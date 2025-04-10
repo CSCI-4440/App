@@ -8,8 +8,8 @@ import {
   SafeAreaView,
   Alert,
   ScrollView,
-  TouchableOpacity,
   Animated,
+  TouchableOpacity,
 } from "react-native";
 import { Text } from "react-native-paper";
 import axios from "axios";
@@ -20,34 +20,33 @@ import MapView, { Marker, Polyline, Callout } from "react-native-maps";
 import DateTimeSelector from "./DateTimeSelector";
 import * as Location from "expo-location";
 import Config from "../config";
+import RouteSummaryCard from "./RouteSummaryComponent";
 
-const baseUrl = "http://192.168.1.161:3000";
+const baseUrl = "http://localhost:3000";
 
 export default function Index() {
   const router = useRouter();
 
   const [startAddress, setStartAddress] = useState("");
   const [destinationAddress, setDestinationAddress] = useState("");
-  const [currentCity, setCurrentCity] = useState<string>("Fetching city...");
-
   const [startLat, setStartLat] = useState<number | null>(42.7284117);
   const [startLong, setStartLong] = useState<number | null>(-73.69178509999999);
   const [destinationLat, setDestinationLat] = useState<number | null>(null);
   const [destinationLong, setDestinationLong] = useState<number | null>(null);
+
   const [apiResponse, setApiResponse] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const startInputRef = useRef<any>(null);
-  const destinationInputRef = useRef<any>(null);
 
   const [selectedTime, setSelectedTime] = useState<Date>(new Date());
   const [showTimePicker, setShowTimePicker] = useState<boolean>(false);
-
   const today = new Date();
-  const formattedToday = today.toISOString().split("T")[0];
   const formattedToday = today.toISOString().split("T")[0];
   const [selectedDate, setSelectedDate] = useState<string>(formattedToday);
 
   const mapRef = useRef<MapView>(null);
+  const startInputRef = useRef<any>(null);
+  const destinationInputRef = useRef<any>(null);
+
   const routeColors = ["blue", "green", "orange", "red", "purple"];
 
   const [isChangingStart, setIsChangingStart] = useState(false);
@@ -56,9 +55,8 @@ export default function Index() {
 
   const toggleChangeStart = () => {
     const toValue = isChangingStart ? 0 : 1;
-  
     if (toValue === 1) setShowStartInput(true);
-  
+
     Animated.timing(slideAnim, {
       toValue,
       duration: 300,
@@ -66,10 +64,9 @@ export default function Index() {
     }).start(() => {
       if (toValue === 0) setShowStartInput(false);
     });
-  
+
     setIsChangingStart(!isChangingStart);
   };
-  
 
   const decodePolyline = (encoded: string) => {
     let points = [];
@@ -77,8 +74,7 @@ export default function Index() {
       lat = 0,
       lng = 0;
     while (index < encoded.length) {
-      let b, shift = 0,
-        result = 0;
+      let b, shift = 0, result = 0;
       do {
         b = encoded.charCodeAt(index++) - 63;
         result |= (b & 0x1f) << shift;
@@ -86,6 +82,7 @@ export default function Index() {
       } while (b >= 0x20);
       const dlat = (result & 1) ? ~(result >> 1) : result >> 1;
       lat += dlat;
+
       shift = 0;
       result = 0;
       do {
@@ -95,6 +92,7 @@ export default function Index() {
       } while (b >= 0x20);
       const dlng = (result & 1) ? ~(result >> 1) : result >> 1;
       lng += dlng;
+
       points.push({ latitude: lat / 1e5, longitude: lng / 1e5 });
     }
     return points;
@@ -128,55 +126,48 @@ export default function Index() {
       const response = await fetch(url);
       const data = await response.json();
       if (data.status === "OK" && data.results.length > 0) {
-        const formattedAddress = data.results[0].formatted_address;
-        setStartAddress(formattedAddress);
-
-        const cityComponent = data.results[0].address_components.find((comp: any) =>
-          comp.types.includes("locality")
-        );
-        if (cityComponent) {
-          setCurrentCity(cityComponent.long_name);
-        } else {
-          setCurrentCity("Unknown Location");
-        }
-      } else {
-        Alert.alert("Error", "Failed to get address");
-        setCurrentCity("Unknown");
+        setStartAddress(data.results[0].formatted_address);
       }
     } catch (error) {
       console.error("Geocoding Error:", error);
-      Alert.alert("Error", "Failed to fetch address");
     }
   };
 
   const getLocation = async () => {
     const hasPermission = await requestLocationPermission();
     if (!hasPermission) return;
-
     const position = await Location.getCurrentPositionAsync({});
     setStartLat(position.coords.latitude);
     setStartLong(position.coords.longitude);
     await reverseGeocode(position.coords.latitude, position.coords.longitude);
   };
 
-  const getRoutes = async () => {
-    if (!startLat || !startLong || !destinationLat || !destinationLong) {
-      alert("Please select valid addresses before searching for routes.");
-      return;
-    }
-    setLoading(true);
-    try {
-      const response = await axios.get(
-        `${baseUrl}/api/changeStartRoutes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}&date=${selectedDate}&time=${selectedTime}`
-      );
-      setApiResponse(response.data);
-    } catch (error) {
-      console.error("Error fetching route data:", error);
-      setApiResponse(null);
-    } finally {
-      setLoading(false);
-    }
-  };
+const getRoutes = async () => {
+  if (!startLat || !startLong || !destinationLat || !destinationLong) {
+    Alert.alert("Missing input", "Please select both a start and destination.");
+    return;
+  }
+
+  setLoading(true);
+  try {
+    const response = await axios.get(
+      `${baseUrl}/api/changeStartRoutes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}&date=${selectedDate}&time=${selectedTime}`
+    );
+    
+    // 👇 This ensures that mapData is available
+    setApiResponse({
+      ...response.data,
+      mapData: response.data.mapData ?? response.data.routes // fallback
+    });
+    
+  } catch (err) {
+    console.error("Route Fetch Error:", err);
+    setApiResponse(null);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   useEffect(() => {
     getLocation();
@@ -184,16 +175,15 @@ export default function Index() {
 
   useEffect(() => {
     if (apiResponse?.mapData) {
-      let allCoordinates: { latitude: number; longitude: number }[] = [];
+      let allCoordinates = [];
       apiResponse.mapData.forEach((route: any) => {
         if (route.polyline) {
-          const coords = decodePolyline(route.polyline);
-          allCoordinates = allCoordinates.concat(coords);
+          allCoordinates = allCoordinates.concat(decodePolyline(route.polyline));
         }
       });
-      if (allCoordinates.length && mapRef.current) {
+      if (mapRef.current) {
         mapRef.current.fitToCoordinates(allCoordinates, {
-          edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
+          edgePadding: { top: 50, bottom: 50, left: 50, right: 50 },
           animated: true,
         });
       }
@@ -212,160 +202,125 @@ export default function Index() {
           longitudeDelta: 0.01,
         }}
       >
-        {apiResponse?.mapData?.map((route: any, index: number) => {
-          const polylineColor = routeColors[index] || "gray";
-          return (
-            <React.Fragment key={index}>
-              {route.polyline && (
-                <Polyline
-                  coordinates={decodePolyline(route.polyline)}
-                  strokeWidth={4}
-                  strokeColor={polylineColor}
-                />
-              )}
-              {route.start && (
-                <Marker coordinate={route.start}>
-                  <Callout>
-                    <View>
-                      <Text style={{ fontWeight: "bold" }}>
-                        Route {index + 1} Start
-                      </Text>
-                      <Text>Time: {route.duration}</Text>
-                      <Text>Distance: {route.distance} m</Text>
-                    </View>
-                  </Callout>
-                </Marker>
-              )}
-              {route.end && (
-                <Marker coordinate={route.end}>
-                  <Callout>
-                    <View>
-                      <Text style={{ fontWeight: "bold" }}>
-                        Route {index + 1} End
-                      </Text>
-                      <Text>Time: {route.duration}</Text>
-                      <Text>Distance: {route.distance} m</Text>
-                    </View>
-                  </Callout>
-                </Marker>
-              )}
-            </React.Fragment>
-          );
-        })}
+        {apiResponse?.mapData?.map((route: any, index: number) => (
+          
+          <React.Fragment key={index}>
+            {route.polyline && (
+              <Polyline
+                coordinates={decodePolyline(route.polyline)}
+                strokeWidth={4}
+                strokeColor={routeColors[index % routeColors.length]}
+              />
+            )}
+            {route.start && <Marker coordinate={route.start} />}
+            {route.end && <Marker coordinate={route.end} />}
+          </React.Fragment>
+        ))}
       </MapView>
 
-      <View style={styles.overlayContainer} pointerEvents="box-none">
-        <View style={styles.inputsContainer}>
-          {/** START ADDRESS */}
-          <Animated.View
-            style={{
-              opacity: slideAnim,
-              transform: [
-                {
-                  translateY: slideAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [-20, 0],
-                  }),
-                },
-              ],
-              overflow: "hidden",
-            }}
-          >
-            {showStartInput && (
-              <View style={[styles.inputWrapper, { marginBottom: 8 }]}>
-                <LocationInput
-                  placeholder={startAddress || "Enter starting address"}
-                  setAddress={setStartAddress}
-                  setLat={setStartLat}
-                  setLong={setStartLong}
-                  inputRef={startInputRef}
-                  header=""
+      {!apiResponse && (
+        <View style={styles.overlayContainer}>
+          <View style={styles.inputsContainer}>
+            <Animated.View
+              style={{
+                opacity: slideAnim,
+                transform: [
+                  {
+                    translateY: slideAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [-20, 0],
+                    }),
+                  },
+                ],
+              }}
+            >
+              {showStartInput && (
+                <View style={[styles.inputWrapper, { marginBottom: 8 }]}>
+                  <LocationInput
+                    placeholder={startAddress || "Enter starting address"}
+                    setAddress={setStartAddress}
+                    setLat={setStartLat}
+                    setLong={setStartLong}
+                    inputRef={startInputRef}
+                    header=""
+                  />
+                </View>
+              )}
+            </Animated.View>
+
+            <View style={styles.inputWrapper}>
+              <LocationInput
+                placeholder="Enter destination address"
+                setAddress={setDestinationAddress}
+                setLat={setDestinationLat}
+                setLong={setDestinationLong}
+                inputRef={destinationInputRef}
+                header=""
+              />
+            </View>
+          </View>
+
+          <View style={styles.routeButtonRow}>
+            <TouchableOpacity style={styles.button} onPress={getRoutes}>
+              <Text style={styles.buttonText}>Find Routes</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.button} onPress={clearOptions}>
+              <Text style={styles.buttonText}>Clear</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      <View style={styles.fixedInfoContainer}>
+        {!apiResponse ? (
+          <View style={styles.infoCard}>
+            <View style={styles.locationRow}>
+              <Text style={styles.locationTitle}>Troy, NY</Text>
+              <View style={[styles.changeStartButton, { width: 150 }]}>
+                <Button
+                  title={isChangingStart ? "Cancel" : "Change Start"}
+                  onPress={toggleChangeStart}
+                  color="#fff"
                 />
               </View>
-            )}
-          </Animated.View>
-
-          {/** DESTINATION ADDRESS */}
-          <View style={styles.inputWrapper}>
-            <LocationInput
-              placeholder="Enter destination address"
-              setAddress={setDestinationAddress}
-              setLat={setDestinationLat}
-              setLong={setDestinationLong}
-              inputRef={destinationInputRef}
-              header=""
-            />
-          </View>
-        </View>
-
-        <View style={styles.routeButtonRow}>
-          <TouchableOpacity style={styles.button} onPress={getRoutes}>
-            <Text style={styles.buttonText}>Find Routes</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={clearOptions}>
-            <Text style={styles.buttonText}>Clear</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <View style={styles.fixedInfoContainer} pointerEvents="box-none">
-        <View style={styles.infoCard}>
-          <View style={styles.locationRow}>
-            <Text style={styles.locationTitle}>{currentCity}</Text>
-            <View style={[styles.changeStartButton, { width: 150 }]}>
+              <View style={styles.changeStartButton}>
+                <Button
+                  title="Change Time"
+                  onPress={() => setShowTimePicker(true)}
+                  color="#fff"
+                />
+              </View>
+            </View>
+            <Text style={styles.weatherInfo}>60° Mostly Clear</Text>
+            <Text style={styles.alertTitle}>Severe Weather Alerts</Text>
+            <Text style={styles.alertSubtitle}>Wind Advisory, Troy, NY</Text>
+            <View style={styles.weatherAlertsButton}>
               <Button
-                title={isChangingStart ? "Cancel" : "Change Start"}
-                onPress={toggleChangeStart}
+                title="Weather Alerts"
+                onPress={() => router.push("/settings")}
                 color="#fff"
               />
             </View>
-            <View style={styles.changeStartButton}>
-              <Button
-                title="Change Time"
-                onPress={() => setShowTimePicker(true)}
-                color="#fff"
-              />
-            </View>
-
           </View>
-          <Text style={styles.weatherInfo}>60° Mostly Clear</Text>
-          <Text style={styles.alertTitle}>Severe Weather Alerts</Text>
-          <Text style={styles.alertSubtitle}>Wind Advisory, {currentCity}</Text>
-          <View style={styles.weatherAlertsButton}>
-            <Button
-              title="Weather Alerts"
-              onPress={() => router.push("/settings")}
-              color="#fff"
-            />
-          </View>
-        </View>
-
-        {apiResponse?.routes?.length > 0 && (
-          <View style={styles.routeScrollWrapper}>
-            <ScrollView>
-              {apiResponse.routes.map((route: any, index: number) => (
-                <View key={index} style={styles.routeCard}>
-                  <Text style={styles.routeTitle}>
-                    {routeColors[index % routeColors.length]
-                      .charAt(0)
-                      .toUpperCase() +
-                      routeColors[index % routeColors.length].slice(1)}{" "}
-                    Route
-                  </Text>
-                  <Text>
-                    {JSON.stringify(
-                      route,
-                      (key, value) => (key === "polyline" ? undefined : value),
-                      2
-                    )}
-                  </Text>
-                </View>
-              ))}
-            </ScrollView>
-          </View>
+        ) : (
+          <RouteSummaryCard
+            start={startAddress}
+            destination={destinationAddress}
+            duration={"13 hr 15 min"}
+            distance={"808 mi"}
+            tolls={"$8.00 in tolls"}
+            leaveBy={"10:30 AM"}
+            arrival={"11:45 PM"}
+            weatherStats={[
+              { label: "Rainfall", value: "20%" },
+              { label: "Snowfall", value: "0%" },
+              { label: "After sunset", value: "60%" },
+            ]}
+            onStartTrip={() => console.log("Start Trip")}
+            onCancel={() => setApiResponse(null)}
+          />
         )}
       </View>
-
 
       <DateTimeSelector
         visible={showTimePicker}
@@ -381,25 +336,18 @@ export default function Index() {
 }
 
 const styles = StyleSheet.create({
-  inputsContainer: {
-    flexDirection: "column",
-    padding: 0,
-    margin: 0,
-  },  
-  routeScrollWrapper: {
-    maxHeight: 200,
-    marginTop: 10,
-  },
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
+  safeArea: { flex: 1, backgroundColor: "#fff" },
   overlayContainer: {
     position: "absolute",
     top: 40,
     left: 16,
     right: 16,
     zIndex: 1,
+  },
+  inputsContainer: {
+    flexDirection: "column",
+    padding: 0,
+    margin: 0,
   },
   inputWrapper: {
     backgroundColor: "transparent",
@@ -417,18 +365,18 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 10,
   },
-  routeCard: {
-    backgroundColor: "#fff",
-    borderColor: "#ddd",
-    borderWidth: 1,
+  button: {
+    flex: 1,
+    backgroundColor: "#007bff",
+    paddingVertical: 10,
+    marginHorizontal: 5,
     borderRadius: 8,
-    padding: 15,
-    marginBottom: 10,
+    alignItems: "center",
   },
-  routeTitle: {
-    fontSize: 16,
+  buttonText: {
+    color: "#fff",
     fontWeight: "bold",
-    marginBottom: 5,
+    fontSize: 16,
   },
   fixedInfoContainer: {
     position: "absolute",
@@ -448,47 +396,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 8,
   },
-  locationTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  weatherInfo: {
-    fontSize: 16,
-    marginBottom: 8,
-  },
+  locationTitle: { fontSize: 18, fontWeight: "bold" },
+  weatherInfo: { fontSize: 16, marginBottom: 8 },
   alertTitle: {
     fontSize: 16,
     fontWeight: "bold",
     color: "red",
     marginBottom: 4,
   },
-  alertSubtitle: {
-    fontSize: 14,
-    marginBottom: 16,
-  },
+  alertSubtitle: { fontSize: 14, marginBottom: 16 },
   changeStartButton: {
     backgroundColor: "#007bff",
     borderRadius: 12,
     overflow: "hidden",
-    marginLeft: 8,
   },
   weatherAlertsButton: {
     backgroundColor: "#007bff",
     borderRadius: 12,
     overflow: "hidden",
     marginTop: 8,
-  },
-  button: {
-    flex: 1,
-    backgroundColor: "#007bff",
-    paddingVertical: 10,
-    marginHorizontal: 5,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
   },
 });
