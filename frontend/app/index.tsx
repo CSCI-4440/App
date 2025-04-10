@@ -15,7 +15,7 @@ import { Text } from 'react-native-paper'
 import axios from 'axios'
 import 'react-native-get-random-values'
 import LocationInput from './locationInput'
-import { useRouter } from 'expo-router'
+import { useRouter, useLocalSearchParams } from 'expo-router'
 import MapView, { Marker, Polyline } from 'react-native-maps'
 import DateTimeSelector from './DateTimeSelector'
 import RouteSummaryCard from './RouteSummaryComponent'
@@ -28,9 +28,12 @@ const baseUrl = 'http://129.161.137.163:3000'
 
 export default function Index() {
 	const router = useRouter()
+	const params = useLocalSearchParams()
 	const insets = useSafeAreaInsets()
 
-	const [showSplash, setShowSplash] = useState(true)
+	const [showSplash, setShowSplash] = useState(() => {
+		return params?.skipSplash !== 'true'
+	})
 
 	const [startAddress, setStartAddress] = useState('')
 	const [destinationAddress, setDestinationAddress] = useState('')
