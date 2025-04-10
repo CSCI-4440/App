@@ -154,21 +154,34 @@ const RouteSummaryCard = ({
 					Distance: {selectedRoute?.distance ? metersToMiles(selectedRoute.distance) : 'N/A'}
 				</Text>
 				<Text style={styles.detail}>
-  					Departure: {selectedRoute?.departure}
+					Departure:{' '}
+					{selectedRoute?.departure
+						? new Date(selectedRoute.departure).toLocaleString([], {
+							dateStyle: 'medium',
+							timeStyle: 'short',
+						})
+						: 'N/A'}
 				</Text>
 				<Text style={styles.detail}>
 					Arrival:{' '}
 					{selectedRoute?.duration
-						? computeArrivalTime(currentTime, selectedRoute.duration)
+						? computeArrivalTime(new Date(selectedRoute?.departure), selectedRoute.duration)
 						: 'N/A'}
 				</Text>
 
-				<Text style={styles.sectionHeader}>Weather Info</Text>
-				{weatherStats.map((stat, index) => (
-					<Text key={index} style={styles.detail}>
-						{stat.label}: {stat.value}
-					</Text>
-				))}
+				<Text style={styles.detail}>
+					Score: {selectedRoute?.weatherScore}
+				</Text>
+
+				<Text style={styles.sectionHeader}>Weather Info:</Text>
+				{selectedRoute?.weatherBreakdown &&
+					Object.entries(selectedRoute.weatherBreakdown as Record<string, number>).map(
+						([condition, percent], index) => (
+							<Text key={index} style={styles.detail}>
+								{condition.charAt(0).toUpperCase() + condition.slice(1)}: {percent}%
+							</Text>
+						)
+					)}
 			</ScrollView>
 
 			<View style={styles.buttonRow}>
