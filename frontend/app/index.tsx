@@ -56,6 +56,8 @@ export default function Index() {
 	const [selectedDate, setSelectedDate] = useState<string>(formattedToday);
 	const mapRef = useRef<MapView>(null);
 
+	const polylineRef = useRef<any>(null)
+
 	const routeColors = ["blue", "green", "orange", "red", "purple"];
 	const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
 
@@ -238,6 +240,15 @@ export default function Index() {
 		}
 	}, [apiResponse, selectedRouteIndex])
 
+	useEffect(() => {
+        if (polylineRef.current) {
+            // Trigger a tiny update to force re-render
+            polylineRef.current.setNativeProps({
+                strokeWidth: 4.01,
+            })
+        }
+    }, [apiResponse, selectedRouteIndex])
+
 	if (showSplash) {
 		return <SplashScreen onFinish={() => setShowSplash(false)} />
 	}
@@ -246,39 +257,40 @@ export default function Index() {
 		<View style={styles.safeArea}>
 			<View style={styles.container}>
 				<View style={styles.mapContainer}>
-					<MapView
-						ref={mapRef}
-						style={StyleSheet.absoluteFillObject}
-						initialRegion={{
-							latitude: startLat || 42.7296,
-							longitude: startLong || -73.6779,
-							latitudeDelta: 0.01,
-							longitudeDelta: 0.01,
-						}}
-					>
-						{apiResponse?.mapData && apiResponse.mapData[selectedRouteIndex] && (
-							<React.Fragment>
-								<Polyline
-									coordinates={decodePolyline(apiResponse.mapData[selectedRouteIndex].polyline)}
-									strokeWidth={4}
-									strokeColor={routeColors[selectedRouteIndex % routeColors.length]}
-								/>
-								{(() => {
-									const decoded = decodePolyline(apiResponse.mapData[selectedRouteIndex].polyline)
-									return (
-										<>
-											{decoded.length > 0 && (
-												<>
-													<Marker coordinate={decoded[0]} pinColor="green" />
-													<Marker coordinate={decoded[decoded.length - 1]} pinColor="red" />
-												</>
-											)}
-										</>
-									)
-								})()}
-							</React.Fragment>
-						)}
-					</MapView>
+				<MapView
+                        ref={mapRef}
+                        style={StyleSheet.absoluteFillObject}
+                        initialRegion={{
+                            latitude: startLat || 42.7296,
+                            longitude: startLong || -73.6779,
+                            latitudeDelta: 0.01,
+                            longitudeDelta: 0.01,
+                        }}
+                    >
+                        {apiResponse?.mapData && apiResponse.mapData[selectedRouteIndex] && (
+                            <React.Fragment>
+                                <Polyline
+                                    ref={polylineRef}
+                                    coordinates={decodePolyline(apiResponse.mapData[selectedRouteIndex].polyline)}
+                                    strokeWidth={4}
+                                    strokeColor={routeColors[selectedRouteIndex % routeColors.length]}
+                                />
+                                {(() => {
+                                    const decoded = decodePolyline(apiResponse.mapData[selectedRouteIndex].polyline)
+                                    return (
+                                        <>
+                                            {decoded.length > 0 && (
+                                                <>
+                                                    <Marker coordinate={decoded[0]} pinColor="green" />
+                                                    <Marker coordinate={decoded[decoded.length - 1]} pinColor="red" />
+                                                </>
+                                            )}
+                                        </>
+                                    )
+                                })()}
+                            </React.Fragment>
+                        )}
+                    </MapView>
 				</View>
 				{!apiResponse && (
 					<View style={[styles.overlayContainer, { top: 0 }]}>

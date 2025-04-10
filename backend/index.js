@@ -87,6 +87,7 @@ app.get("/api/getRoutes", async (req, res) => {
           end: r.locations[r.locations.length - 1],
           weatherScore: r.weatherScore,
           weatherType: r.weatherType,
+          weatherBreakdown: r.weatherBreakdown,
           score: r.score,
           departure: r.startDate.toISOString(),
           sunsetTime: r.sunsetTime
@@ -100,6 +101,7 @@ app.get("/api/getRoutes", async (req, res) => {
 
       manager.addRoutesDiffTime();
       const bestTimedRoute = manager.getBestTimedRoute()[0];
+      console.log(bestTimedRoute.weatherBreakdown);
 
       mapDetails.push({
         distance: bestTimedRoute.distance,
@@ -109,6 +111,7 @@ app.get("/api/getRoutes", async (req, res) => {
         end: bestTimedRoute.locations[bestTimedRoute.locations.length - 1],
         weatherScore: bestTimedRoute.weatherScore,
         weatherType: bestTimedRoute.weatherType,
+        weatherBreakdown: bestTimedRoute.weatherBreakdown,
         score: bestTimedRoute.score,
         departure: bestTimedRoute.startDate.toISOString(),
       });
