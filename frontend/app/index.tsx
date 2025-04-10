@@ -445,7 +445,6 @@ export default function Index() {
 									{ label: 'Snowfall', value: '0%' },
 									{ label: 'After sunset', value: '60%' },
 								]}
-								onStartTrip={() => console.log('Start Trip')}
 								onCancel={() => {
 									summaryAnim.setValue(0) // reset animation
 									setApiResponse(null)

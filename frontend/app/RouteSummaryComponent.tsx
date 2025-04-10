@@ -29,7 +29,6 @@ type WeatherStat = {
  * @property {string} destination - The destination location of the trip.
  * @property {string} arrival - The estimated arrival time.
  * @property {WeatherStat[]} weatherStats - An array of weather statistics to be displayed.
- * @property {() => void} onStartTrip - Callback function to be called when the user starts the trip.
  * @property {() => void} onCancel - Callback function to be called when the user cancels the trip.
  * @property {any[]} routes - An array of route objects containing route data.
  * @property {number} selectedRouteIndex - The index of the currently selected route.
@@ -43,7 +42,6 @@ type Props = {
 	destination: string
 	arrival: string
 	weatherStats: WeatherStat[]
-	onStartTrip: () => void
 	onCancel: () => void
 	routes: any[]
 	selectedRouteIndex: number
@@ -98,7 +96,6 @@ const RouteSummaryCard = ({
 	destination,
 	arrival,
 	weatherStats,
-	onStartTrip,
 	onCancel,
 	routes,
 	selectedRouteIndex,
@@ -172,9 +169,6 @@ const RouteSummaryCard = ({
 			</ScrollView>
 
 			<View style={styles.buttonRow}>
-				<TouchableOpacity style={styles.buttonStart} onPress={onStartTrip}>
-					<Text style={styles.buttonText}>Start Trip</Text>
-				</TouchableOpacity>
 				<TouchableOpacity style={styles.buttonCancel} onPress={onCancel}>
 					<Text style={styles.buttonText}>Cancel</Text>
 				</TouchableOpacity>
