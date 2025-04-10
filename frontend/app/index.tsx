@@ -24,13 +24,11 @@ import Config from "../config";
 import RouteSummaryCard from "./RouteSummaryComponent";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-
-const baseUrl = "http://localhost:3000";
+const baseUrl = "http://129.161.37.142:3000";
 
 export default function Index() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-
   const [startAddress, setStartAddress] = useState("");
   const [destinationAddress, setDestinationAddress] = useState("");
   const [startLat, setStartLat] = useState<number | null>(42.7284117);
@@ -166,6 +164,9 @@ export default function Index() {
         ...response.data,
         mapData: response.data.mapData ?? response.data.routes,
       });
+
+      console.log( response.data.routes )
+
       Animated.timing(summaryAnim, {
         toValue: 1,
         duration: 400,
@@ -357,6 +358,7 @@ export default function Index() {
                 selectedRouteIndex={selectedRouteIndex}
                 setSelectedRouteIndex={setSelectedRouteIndex}
                 routeColors={routeColors}
+                currentTime={selectedTime}
               />
             </Animated.View>
           )}

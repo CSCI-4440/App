@@ -18,6 +18,7 @@ type Props = {
   selectedRouteIndex: number;
   setSelectedRouteIndex: (index: number) => void;
   routeColors: string[];
+  currentTime: Date;
 };
 
 const formatDuration = (seconds: number) => {
@@ -31,6 +32,10 @@ const metersToMiles = (meters: number) => {
   return `${miles.toFixed(1)} mi`;
 };
 
+const computeArrivalTime = (startTime: Date, durationInSeconds: number) => {
+  const arrival = new Date(startTime.getTime() + durationInSeconds * 1000);
+  return arrival.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
 
 const RouteSummaryCard = ({
   start,
@@ -43,8 +48,10 @@ const RouteSummaryCard = ({
   selectedRouteIndex,
   setSelectedRouteIndex,
   routeColors,
+  currentTime
 }: Props) => {
   const selectedRoute = routes[selectedRouteIndex];
+  console.log("Selected route data: " , selectedRoute)
 
   return (
     <View style={styles.card}>
@@ -90,10 +97,10 @@ const RouteSummaryCard = ({
         <Text style={styles.detail}>
           Distance: {selectedRoute?.distance ? metersToMiles(selectedRoute.distance) : "N/A"}
         </Text>
+
         <Text style={styles.detail}>
-          Tolls: {selectedRoute?.tolls || "N/A"}
-        </Text>
-        <Text style={styles.detail}>Arrival: {arrival}</Text>
+        Arrival: {selectedRoute?.duration ? computeArrivalTime(currentTime, selectedRoute.duration) : "N/A"}
+      </Text>
 
         <Text style={styles.sectionHeader}>Weather Info</Text>
         {weatherStats.map((stat, index) => (
