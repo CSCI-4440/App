@@ -1,21 +1,39 @@
+/**
+ * @file Settings.tsx
+ * @description A React Native component that provides a settings screen for the STRATUS app.
+ * It allows users to toggle alerts for snow, rain, and wind, as well as the option to use the current location.
+ * The component is styled using React Native's StyleSheet and includes a button to save the settings.
+ * */
+
 import React, { useState } from 'react'
 import { View, Text, Switch, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native'
 import { useRouter } from 'expo-router'
 
+/**
+ * @function Settings
+ * @description A React Native component that provides a settings screen for the STRATUS app.
+ * @returns {JSX.Element} - A React Native component that provides a settings screen for the STRATUS app.
+ */
 export default function Settings() {
+	// Initialize the router for navigation
 	const router = useRouter()
+
+	// State variables to manage alerts and location settings
 	const [alerts, setAlerts] = useState({
 		snow: true,
 		rain: true,
 		wind: true,
 	})
 
+	// State variable to manage the use of current location
 	const [useLocation, setUseLocation] = useState(true)
 
+	// Function to toggle alert settings
 	const toggleAlert = (key: keyof typeof alerts) => {
 		setAlerts({ ...alerts, [key]: !alerts[key] })
 	}
 
+	// Render the settings screen
 	return (
 		<SafeAreaView style={styles.safeArea}>
 			<View style={styles.container}>
@@ -47,7 +65,10 @@ export default function Settings() {
 					<Text style={styles.label}>Fahrenheit</Text>
 				</View>
 
-				<TouchableOpacity style={styles.doneButton} onPress={() => router.push('/')}>
+				<TouchableOpacity
+					style={styles.doneButton}
+					onPress={() => router.push({ pathname: '/', params: { skipSplash: 'true' } })}
+				>
 					<Text style={styles.doneButtonText}>Done</Text>
 				</TouchableOpacity>
 			</View>
@@ -55,6 +76,7 @@ export default function Settings() {
 	)
 }
 
+// Styles for the Settings component
 const styles = StyleSheet.create({
 	safeArea: {
 		flex: 1,
