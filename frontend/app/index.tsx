@@ -382,11 +382,7 @@ export default function Index() {
 							<Text style={styles.alertTitle}>Severe Weather Alerts</Text>
 							<Text style={styles.alertSubtitle}>None</Text>
 							<View style={styles.weatherAlertsButton}>
-								<Button
-									title="Weather Alerts"
-									onPress={() => router.push('/settings')}
-									color="#fff"
-								/>
+								<Button title="Settings" onPress={() => router.push('/settings')} color="#fff" />
 							</View>
 						</View>
 					) : (
