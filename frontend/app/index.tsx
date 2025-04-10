@@ -1,6 +1,6 @@
 /**
  * @file index.tsx
- * @description STRATUS App Main Component
+ * @descriptionSTRATUS App Main Component
  * This component serves as the main entry point for the STRATUS application.
  * It includes the map view, location input fields, route selection, and weather alerts.
  * The component uses React Native, Expo, and various libraries for location services, map rendering, and UI components.
@@ -217,7 +217,6 @@ export default function Index() {
 	 * @async
 	 */
 	const getRoutes = async () => {
-		// Validate input coordinates
 		if (!startLat || !startLong || !destinationLat || !destinationLong) {
 			Alert.alert('Missing input', 'Please select both a start and destination.')
 			return
@@ -225,37 +224,49 @@ export default function Index() {
 
 		setLoading(true)
 
-		// Fetch routes from the server
-		// Use the selected date and time for the request
 		try {
 			const response = await axios.get(
 				`${baseUrl}/api/changeStartRoutes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}&date=${selectedDate}&time=${selectedTime}`,
 			)
 
-			// Set the API response and map data
+			const data = response.data.mapData ?? response.data.routes
+
+			// Set the response and mapData
 			setApiResponse({
 				...response.data,
-				mapData: response.data.mapData ?? response.data.routes,
+				mapData: data,
 			})
 
-			console.log(response.data.routes)
+			// Reset selection to force trigger re-render (step 1)
+			setSelectedRouteIndex(-1)
 
-			// Animate the summary card to slide in
-			Animated.timing(summaryAnim, {
-				toValue: 1,
-				duration: 400,
-				useNativeDriver: true,
-			}).start()
+			// Delay ensures state propagates before resetting to 0 (step 2)
+			setTimeout(() => {
+				setSelectedRouteIndex(0)
 
-			// Fit the map to the coordinates of the first route
-			setSelectedRouteIndex(0)
+				// Step 3: Decode and fit map
+				const polyline = data[0]?.polyline
+				if (polyline && mapRef.current) {
+					const coords = decodePolyline(polyline)
+					console.log('Decoded polyline:', JSON.stringify(coords, null, 2))
+					mapRef.current.fitToCoordinates(coords, {
+						edgePadding: { top: 30, bottom: 180, left: 30, right: 30 },
+						animated: true,
+					})
+				}
+
+				// Animate summary after map is shown
+				Animated.timing(summaryAnim, {
+					toValue: 1,
+					duration: 400,
+					useNativeDriver: true,
+				}).start()
+			}, 50)
 		} catch (err) {
-			// Handle errors
 			console.error('Route Fetch Error:', err)
 			setApiResponse(null)
 			summaryAnim.setValue(0)
 		} finally {
-			// Reset loading state
 			setLoading(false)
 		}
 	}
@@ -266,20 +277,18 @@ export default function Index() {
 
 	// UseEffect to handle the map view when the API response changes
 	useEffect(() => {
-		if (apiResponse?.mapData) {
-			let allCoordinates = []
+		if (apiResponse?.mapData && mapRef.current) {
 			const selected = apiResponse.mapData[selectedRouteIndex]
 			if (selected?.polyline) {
-				allCoordinates = decodePolyline(selected.polyline)
-			}
-			if (mapRef.current && allCoordinates.length > 0) {
-				mapRef.current.fitToCoordinates(allCoordinates, {
+				const coords = decodePolyline(selected.polyline)
+				console.log('Decoded polyline:', JSON.stringify(coords, null, 2))
+				mapRef.current.fitToCoordinates(coords, {
 					edgePadding: { top: 30, bottom: 180, left: 30, right: 30 },
 					animated: true,
 				})
 			}
 		}
-	}, [apiResponse, selectedRouteIndex])
+	}, [selectedRouteIndex, apiResponse])
 
 	// Show the splash screen for 2 seconds
 	if (showSplash) {
@@ -301,28 +310,26 @@ export default function Index() {
 							longitudeDelta: 0.01,
 						}}
 					>
-						{apiResponse?.mapData && apiResponse.mapData[selectedRouteIndex] && (
-							<React.Fragment>
-								<Polyline
-									coordinates={decodePolyline(apiResponse.mapData[selectedRouteIndex].polyline)}
-									strokeWidth={4}
-									strokeColor={routeColors[selectedRouteIndex % routeColors.length]}
-								/>
-								{(() => {
-									const decoded = decodePolyline(apiResponse.mapData[selectedRouteIndex].polyline)
-									return (
-										<>
-											{decoded.length > 0 && (
-												<>
-													<Marker coordinate={decoded[0]} pinColor="green" />
-													<Marker coordinate={decoded[decoded.length - 1]} pinColor="red" />
-												</>
-											)}
-										</>
-									)
-								})()}
-							</React.Fragment>
-						)}
+						{apiResponse?.mapData?.length > 0 &&
+							selectedRouteIndex < apiResponse.mapData.length && (
+								<React.Fragment>
+									<Polyline
+										coordinates={decodePolyline(apiResponse.mapData[selectedRouteIndex].polyline)}
+										strokeWidth={4}
+										strokeColor={routeColors[selectedRouteIndex % routeColors.length]}
+									/>
+									{(() => {
+										const decoded = decodePolyline(apiResponse.mapData[selectedRouteIndex].polyline)
+										if (!decoded || decoded.length < 2) return null
+										return (
+											<>
+												<Marker coordinate={decoded[0]} pinColor="green" />
+												<Marker coordinate={decoded[decoded.length - 1]} pinColor="red" />
+											</>
+										)
+									})()}
+								</React.Fragment>
+							)}
 					</MapView>
 				</View>
 				{!apiResponse && (
@@ -436,8 +443,14 @@ export default function Index() {
 								]}
 								onStartTrip={() => console.log('Start Trip')}
 								onCancel={() => {
-									summaryAnim.setValue(0) // reset animation
-									setApiResponse(null)
+									setSelectedRouteIndex(0)
+									Animated.timing(summaryAnim, {
+										toValue: 0,
+										duration: 300,
+										useNativeDriver: true,
+									}).start(() => {
+										setApiResponse(null)
+									})
 								}}
 								routes={apiResponse.mapData}
 								selectedRouteIndex={selectedRouteIndex}
