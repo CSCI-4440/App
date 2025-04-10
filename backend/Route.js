@@ -75,25 +75,23 @@ class Route {
   }
 
 
-  // static clone(originalRoute) {
-  //   const newRoute = new Route(originalRoute.legs, new Date(originalRoute.startDate));
+  static clone(originalRoute) {
+    const newRoute = new Route(originalRoute.legs, new Date(originalRoute.startDate));
   
-  //   newRoute.startAddress = { ...originalRoute.startAddress };
-  //   newRoute.destinationAddress = { ...originalRoute.destinationAddress };
-  //   newRoute.distance = originalRoute.distance;
-  //   newRoute.time = originalRoute.time;
-  //   newRoute.polyline = originalRoute.polyline;
-  //   newRoute.weatherScore = originalRoute.weatherScore;
-  //   newRoute.weatherType = originalRoute.weatherType;
-  //   newRoute.weatherBreakdown = { ...(originalRoute.weatherBreakdown || {}) };
-  //   newRoute.times = originalRoute.times.map(t => new Date(t));
-  //   newRoute.locations = originalRoute.locations.map(loc => Location.clone(loc));
-  //   newRoute.weatherConditions = [...originalRoute.weatherConditions];
+    newRoute.startAddress = { ...originalRoute.startAddress };
+    newRoute.destinationAddress = { ...originalRoute.destinationAddress };
+    newRoute.distance = originalRoute.distance;
+    newRoute.time = originalRoute.time;
+    newRoute.polyline = originalRoute.polyline;
+    newRoute.weatherScore = originalRoute.weatherScore;
+    newRoute.weatherType = originalRoute.weatherType;
+    newRoute.weatherBreakdown = { ...(originalRoute.weatherBreakdown || {}) };
+    newRoute.times = originalRoute.times.map(t => new Date(t));
+    newRoute.locations = originalRoute.locations.map(loc => Location.clone(loc));
+    newRoute.weatherConditions = [...originalRoute.weatherConditions];
   
-  //   return newRoute;
-  // }
-
-
+    return newRoute;
+  }
 
   get getPolyline() {
     return this.polyline;
@@ -104,14 +102,14 @@ class Route {
   }
 
 
-  set sestartDate(newDate){
+  set setStartDate(newDate){
     this.startDate = newDate;
   }
 
-  set updateTimesAndConditions(timeDiffHours){
-    for (let t = 0; i < this.times.length; t++){
-      this.times[i] = this.updateTime(this.times[i], timeDiffHours * 60); 
-      this.weatherConditions[i] = this.locations[i].getCondition(this.times[i]);
+  updateTimesAndConditions(timeDiffHours){
+    for (let t = 0; t < this.times.length; t++){
+      this.times[t] = this.updateTime(this.times[t], timeDiffHours * 60); 
+      this.weatherConditions[t] = this.locations[t].getCondition(this.times[t]);
     }
   }
 

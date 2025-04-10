@@ -30,27 +30,23 @@ class Manager {
   }
 
   
-  // addRoutesDiffTime() {
-  //   let baseTime = this.routes[0].startDate;
-  //   console.log(0);
-  //   for (let changeTime of this.timeSuggestions){
-  //     let newStartTime = this.updateTime(baseTime, changeTime)
-  //     if (this.isPast(newStartTime)){
-  //       continue;
-  //     }
-  //     for (let route of this.routes){
-  //       let newStartTimeRoute = Route.clone(route);
-  //       console.log(1);
-  //       newStartTimeRoute.startDate(newStartTime);
-  //       console.log(2);
-  //       newStartTimeRoute.updateTimesAndConditions(changeTime);
-  //       console.log(3);
-  //       //HAVE TO FIGURE HOW TO UPDATE CONDITIONS
-  //       newStartTimeRoute.calculateWeatherScore();
-  //       routesDiffTime.push(newStartTimeRoute);
-  //     }
-  //   }
-  // }
+  addRoutesDiffTime() {
+    let baseTime = this.routes[0].startDate;
+    for (let changeTime of this.timeSuggestions){
+      let newStartTime = this.updateTime(baseTime, changeTime)
+      if (this.isPast(newStartTime)){
+        continue;
+      }
+      for (let route of this.routes){
+        let newStartTimeRoute = Route.clone(route);
+        newStartTimeRoute.setStartDate = newStartTime;
+        newStartTimeRoute.updateTimesAndConditions(changeTime);
+        //HAVE TO FIGURE HOW TO UPDATE CONDITIONS
+        newStartTimeRoute.calculateWeatherScore();
+        this.routesDiffTime.push(newStartTimeRoute);
+      }
+    }
+  }
 
   getBestTimedRoute() {
     // Determine the maximum values for time and distance across all routes.
@@ -63,7 +59,7 @@ class Manager {
     });
 
     // Sort the routes by score (highest first) and return the top 'count' routes.
-    const sortedRoutes = this.routes.routesDiffTime.sort((a, b) => b.score - a.score);
+    const sortedRoutes = this.routesDiffTime.sort((a, b) => b.score - a.score);
     return sortedRoutes.slice(0, 1);
   }
 

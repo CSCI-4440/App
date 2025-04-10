@@ -10,14 +10,14 @@ class Location {
         this.forecast = new Map();
     }
 
-    // static clone(original) {
-    //     const newLoc = new Location(original.latitude, original.longitude);
+    static clone(original) {
+        const newLoc = new Location(original.latitude, original.longitude);
     
-    //     // Deep copy the forecast map
-    //     newLoc.forecast = new Map(original.forecast);
+        // Deep copy the forecast map
+        newLoc.forecast = new Map(original.forecast);
     
-    //     return newLoc;
-    // }
+        return newLoc;
+    }
 
     roundDateToNearestHour(date) {
         const rounded = new Date(date); // Clone the original date to avoid mutating it

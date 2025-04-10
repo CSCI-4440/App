@@ -85,13 +85,13 @@ app.get("/api/getRoutes", async (req, res) => {
       }
       
     
-      const bestRoutes = [manager.getBestRoute()];
-      console.log("OG Routes:", bestRoutes);
+      let bestRoutes = [manager.getBestRoute()];
+      // console.log("OG Routes:", bestRoutes);
       
 
-      // manager.addRoutesDiffTime();
-      // const bestTimedRoute = manager.getBestTimedRoute();
-      // console.log("Best Timed Route:", bestTimedRoute);
+      manager.addRoutesDiffTime();
+      const bestTimedRoute = manager.getBestTimedRoute()[0];
+      bestRoutes.push(bestTimedRoute);
       
       
       const formattedRoutes = bestRoutes.map(r => ({
@@ -103,10 +103,11 @@ app.get("/api/getRoutes", async (req, res) => {
           weatherType: r.weatherType,
           score: r.score,
           polyline: r.polyline,
-          breakDown: r.weatherBreakdown
+          breakDown: r.weatherBreakdown,
+          departure: r.startDate
         }));
-        
-      // console.log("Formatted text: " , formattedRoutes)
+
+        console.log("Formatted:", formattedRoutes);
   
       res.json({ routes: formattedRoutes, mapData: mapDetails });
     } catch (error) {
