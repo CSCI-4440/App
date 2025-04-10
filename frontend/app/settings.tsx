@@ -65,7 +65,10 @@ export default function Settings() {
 					<Text style={styles.label}>Fahrenheit</Text>
 				</View>
 
-				<TouchableOpacity style={styles.doneButton} onPress={() => router.push('/')}>
+				<TouchableOpacity
+					style={styles.doneButton}
+					onPress={() => router.push({ pathname: '/', params: { skipSplash: 'true' } })}
+				>
 					<Text style={styles.doneButtonText}>Done</Text>
 				</TouchableOpacity>
 			</View>

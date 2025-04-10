@@ -23,7 +23,7 @@ import { Text } from 'react-native-paper'
 import axios from 'axios'
 import 'react-native-get-random-values'
 import LocationInput from './locationInput'
-import { useRouter } from 'expo-router'
+import { useRouter, useLocalSearchParams } from 'expo-router'
 import MapView, { Marker, Polyline } from 'react-native-maps'
 import DateTimeSelector from './DateTimeSelector'
 import RouteSummaryCard from './RouteSummaryComponent'
@@ -37,14 +37,17 @@ const baseUrl = 'http://129.161.66.19:3000'
 
 // Main component function
 export default function Index() {
-	// Initialize router
+	// Initialize router and local search parameters
 	const router = useRouter()
+	const params = useLocalSearchParams()
 
 	// Get safe area insets for handling device notches and status bars
 	const insets = useSafeAreaInsets()
 
 	// State variables for managing app state
-	const [showSplash, setShowSplash] = useState(true)
+	const [showSplash, setShowSplash] = useState(() => {
+		return params?.skipSplash !== 'true'
+	})
 	const [startAddress, setStartAddress] = useState('')
 	const [destinationAddress, setDestinationAddress] = useState('')
 	const [startLat, setStartLat] = useState<number | null>(42.7284117)
@@ -416,11 +419,7 @@ export default function Index() {
 							<Text style={styles.alertTitle}>Severe Weather Alerts</Text>
 							<Text style={styles.alertSubtitle}>Wind Advisory, Troy, NY</Text>
 							<View style={styles.weatherAlertsButton}>
-								<Button
-									title="Weather Alerts"
-									onPress={() => router.push('/settings')}
-									color="#fff"
-								/>
+								<Button title="Settings" onPress={() => router.push('/Settings')} color="#fff" />
 							</View>
 						</View>
 					) : (
