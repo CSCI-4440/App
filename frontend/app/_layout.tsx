@@ -10,7 +10,8 @@ export default function RootLayout() {
 	return (
 		<Stack
 			screenOptions={{
-				headerShown: false, // hides all headers
+				// Hide the header for all screens
+				headerShown: false,
 			}}
 		></Stack>
 	)

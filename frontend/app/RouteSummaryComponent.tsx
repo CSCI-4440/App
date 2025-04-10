@@ -12,11 +12,32 @@ import React from 'react'
 import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native'
 import { Text } from 'react-native-paper'
 
+/**
+ * @typedef {Object} WeatherStat
+ * @property {string} label - The label for the weather statistic (e.g., "Temperature").
+ * @property {string} value - The value of the weather statistic (e.g., "75°F").
+ * @description Represents a weather statistic to be displayed in the route summary.
+ */
 type WeatherStat = {
 	label: string
 	value: string
 }
 
+/**
+ * @typedef {Object} Props
+ * @property {string} start - The starting location of the trip.
+ * @property {string} destination - The destination location of the trip.
+ * @property {string} arrival - The estimated arrival time.
+ * @property {WeatherStat[]} weatherStats - An array of weather statistics to be displayed.
+ * @property {() => void} onStartTrip - Callback function to be called when the user starts the trip.
+ * @property {() => void} onCancel - Callback function to be called when the user cancels the trip.
+ * @property {any[]} routes - An array of route objects containing route data.
+ * @property {number} selectedRouteIndex - The index of the currently selected route.
+ * @property {(index: number) => void} setSelectedRouteIndex - Function to set the selected route index.
+ * @property {string[]} routeColors - An array of colors for the route tabs.
+ * @property {Date} currentTime - The current time to compute the arrival time.
+ * @description Props for the RouteSummaryComponent.
+ */
 type Props = {
 	start: string
 	destination: string
@@ -31,22 +52,47 @@ type Props = {
 	currentTime: Date
 }
 
+/**
+ * @function formatDuration
+ * @description Formats a duration in seconds into a human-readable string.
+ * @param seconds - The duration in seconds to be formatted.
+ * @returns {string} - A string representing the formatted duration (e.g., "1 hr 30 min").
+ */
 const formatDuration = (seconds: number) => {
 	const hours = Math.floor(seconds / 3600)
 	const minutes = Math.round((seconds % 3600) / 60)
 	return `${hours > 0 ? `${hours} hr ` : ''}${minutes} min`
 }
 
+/**
+ * @function metersToMiles
+ * @description Converts a distance in meters to miles and formats it as a string.
+ * @param meters - The distance in meters to be converted.
+ * @returns {string} - A string representing the distance in miles (e.g., "1.5 mi").
+ */
 const metersToMiles = (meters: number) => {
 	const miles = meters / 1609.34
 	return `${miles.toFixed(1)} mi`
 }
 
+/**
+ * @function computeArrivalTime
+ * @description Computes the estimated arrival time based on the start time and duration.
+ * @param startTime - The start time of the trip.
+ * @param durationInSeconds - The duration of the trip in seconds.
+ * @returns {string} - A string representing the estimated arrival time in "HH:MM AM/PM" format.
+ */
 const computeArrivalTime = (startTime: Date, durationInSeconds: number) => {
 	const arrival = new Date(startTime.getTime() + durationInSeconds * 1000)
 	return arrival.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
+/**
+ * @function RouteSummaryCard
+ * @description A React Native component that displays a summary of the selected route for a trip.
+ * @returns {JSX.Element} - A React Native component that displays the route summary.
+ * @param {Props} props - The props for the RouteSummaryCard component.
+ */
 const RouteSummaryCard = ({
 	start,
 	destination,
@@ -63,6 +109,7 @@ const RouteSummaryCard = ({
 	const selectedRoute = routes[selectedRouteIndex]
 	console.log('Selected route data: ', selectedRoute)
 
+	// Render the route summary card
 	return (
 		<View style={styles.card}>
 			{routes.length > 1 && (
@@ -134,6 +181,7 @@ const RouteSummaryCard = ({
 	)
 }
 
+// Styles for the RouteSummaryCard component
 const styles = StyleSheet.create({
 	card: {
 		backgroundColor: '#fff',
