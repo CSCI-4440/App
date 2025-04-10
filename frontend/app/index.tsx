@@ -1,11 +1,15 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
-  View,
-  StyleSheet,
-  ActivityIndicator,
-  Button,
-  Platform,
-  SafeAreaView, Alert, ScrollView
+	View,
+	StyleSheet,
+	ActivityIndicator,
+	Button,
+	Platform,
+	SafeAreaView,
+	Alert,
+	ScrollView,
+	Animated,
+	TouchableOpacity,
 } from "react-native";
 import { Text } from "react-native-paper";
 import axios from "axios";
@@ -14,459 +18,471 @@ import LocationInput from "./locationInput";
 import { useRouter } from "expo-router";
 import MapView, { Marker, Polyline, Callout } from "react-native-maps";
 import DateTimeSelector from "./DateTimeSelector";
-import { TouchableOpacity } from "react-native";
+import RouteSummaryCard from './RouteSummaryComponent';
 import * as Location from "expo-location";
 import Config from "../config.js";
 
 
-const baseUrl ="http://129.161.77.77:3000"
+const baseUrl = "http://129.161.77.77:3000"
 
 export default function Index() {
-  const router = useRouter();
-  const [startAddress, setStartAddress] = useState("");
-  const [destinationAddress, setDestinationAddress] = useState("");
+	const router = useRouter();
+	const [startAddress, setStartAddress] = useState("");
+	const [destinationAddress, setDestinationAddress] = useState("");
 
-  const [startLat, setStartLat] = useState<number | null>(42.7284117);
-  const [startLong, setStartLong] = useState<number | null>(-73.69178509999999);
-  const [destinationLat, setDestinationLat] = useState<number | null>(null);
-  const [destinationLong, setDestinationLong] = useState<number | null>(null);
+	const [startLat, setStartLat] = useState<number | null>(42.7284117);
+	const [startLong, setStartLong] = useState<number | null>(-73.69178509999999);
+	const [destinationLat, setDestinationLat] = useState<number | null>(null);
+	const [destinationLong, setDestinationLong] = useState<number | null>(null);
 
-  const [apiResponse, setApiResponse] = useState<any>(null);
-  const [loading, setLoading] = useState<boolean>(false);
+	const [apiResponse, setApiResponse] = useState<any>(null);
+	const [loading, setLoading] = useState<boolean>(false);
 
-  const startInputRef = useRef<any>(null);
-  const destinationInputRef = useRef<any>(null);
-  
-  const [selectedTime, setSelectedTime] = useState<Date>(new Date());
-  const [showTimePicker, setShowTimePicker] = useState<boolean>(false);
+	const startInputRef = useRef<any>(null);
+	const destinationInputRef = useRef<any>(null);
 
-  const today = new Date();
-  const formattedToday = today.toISOString().split('T')[0]; // "YYYY-MM-DD"
+	const [selectedTime, setSelectedTime] = useState<Date>(new Date());
+	const [showTimePicker, setShowTimePicker] = useState<boolean>(false);
 
-  const [selectedDate, setSelectedDate] = useState<string>(formattedToday);
-  const mapRef = useRef<MapView>(null);
+	const today = new Date();
+	const formattedToday = today.toISOString().split('T')[0]; // "YYYY-MM-DD"
 
-  const routeColors = ["blue", "green", "orange", "red", "purple"];
+	const [selectedDate, setSelectedDate] = useState<string>(formattedToday);
+	const mapRef = useRef<MapView>(null);
 
-  function toGoogleTime(dateStr: string, time: Date): string {
-    const t = new Date(time.getTime() + 10 * 60 * 1000)
+	const routeColors = ["blue", "green", "orange", "red", "purple"];
 
-    return t.toISOString();
-  }
 
-  const decodePolyline = (encoded: string) => {
-    let points = [];
-    let index = 0,
-      lat = 0,
-      lng = 0;
-    while (index < encoded.length) {
-      let b, shift = 0, result = 0;
-      do {
-        b = encoded.charCodeAt(index++) - 63;
-        result |= (b & 0x1f) << shift;
-        shift += 5;
-      } while (b >= 0x20);
-      const dlat = (result & 1) ? ~(result >> 1) : result >> 1;
-      lat += dlat;
-      shift = 0;
-      result = 0;
-      do {
-        b = encoded.charCodeAt(index++) - 63;
-        result |= (b & 0x1f) << shift;
-        shift += 5;
-      } while (b >= 0x20);
-      const dlng = (result & 1) ? ~(result >> 1) : result >> 1;
-      lng += dlng;
-      points.push({ latitude: lat / 1e5, longitude: lng / 1e5 });
-    }
-    return points;
-  };
+	const [isChangingStart, setIsChangingStart] = useState(false)
+	const [showStartInput, setShowStartInput] = useState(false)
+	const slideAnim = useRef(new Animated.Value(0)).current
 
-  const clearOptions = () => {
-    setStartAddress("");
-    setDestinationAddress("");
-    setStartLat(null);
-    setStartLong(null);
-    setDestinationLat(null);
-    setDestinationLong(null);
-    setApiResponse(null);
-    setLoading(false);
-    startInputRef.current?.clear();
-    destinationInputRef.current?.clear();
-  };
+	const summaryAnim = useRef(new Animated.Value(0)).current
 
-  const requestLocationPermission = async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert("Permission Denied", "Enable location permissions to continue.");
-        return false;
-      }
-      return true;
-  };
+	function toGoogleTime(dateStr: string, time: Date): string {
+		const t = new Date(time.getTime() + 10 * 60 * 1000)
 
-  const reverseGeocode = async (latitude: number, longitude: number) => {
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${Config.GOOGLE_API_KEY}`;
+		return t.toISOString();
+	}
 
-    try {
-      const response = await fetch(url);
-      const data = await response.json();
-      if (data.status === "OK" && data.results.length > 0) {
-        console.log(data.results[0].formatted_address)
-        setStartAddress(data.results[0].formatted_address);
-      } else {
-        Alert.alert("Error", "Failed to get address");
-      }
-    } catch (error) {
-      console.error("Geocoding Error:", error);
-      Alert.alert("Error", "Failed to fetch address");
-    }
-  };
-  
-  const getLocation = async () => {
-    const hasPermission = await requestLocationPermission();
-    if (!hasPermission) return;
-  
-    const position = await Location.getCurrentPositionAsync({});
-    setStartLat(position.coords.latitude);
-    setStartLong(position.coords.longitude);
-  
-    console.log("Coordinates:", position.coords.latitude, position.coords.longitude);
-    
-    console.log("Google API called");
-    await reverseGeocode(position.coords.latitude, position.coords.longitude);
-  };
+	const decodePolyline = (encoded: string) => {
+		let points = [];
+		let index = 0,
+			lat = 0,
+			lng = 0;
+		while (index < encoded.length) {
+			let b, shift = 0, result = 0;
+			do {
+				b = encoded.charCodeAt(index++) - 63;
+				result |= (b & 0x1f) << shift;
+				shift += 5;
+			} while (b >= 0x20);
+			const dlat = (result & 1) ? ~(result >> 1) : result >> 1;
+			lat += dlat;
+			shift = 0;
+			result = 0;
+			do {
+				b = encoded.charCodeAt(index++) - 63;
+				result |= (b & 0x1f) << shift;
+				shift += 5;
+			} while (b >= 0x20);
+			const dlng = (result & 1) ? ~(result >> 1) : result >> 1;
+			lng += dlng;
+			points.push({ latitude: lat / 1e5, longitude: lng / 1e5 });
+		}
+		return points;
+	};
 
-  const getRoutes = async () => {
-    if (!startLat || !startLong || !destinationLat || !destinationLong) {
-      alert("Please select valid addresses before searching for routes.");
-      return;
-    }
-    setLoading(true);
-    try {
-      console.log("Start Coords:", startLat, startLong);
-      console.log("Destination Coords:", destinationLat, destinationLong);
+	const clearOptions = () => {
+		setStartAddress("");
+		setDestinationAddress("");
+		setStartLat(null);
+		setStartLong(null);
+		setDestinationLat(null);
+		setDestinationLong(null);
+		setApiResponse(null);
+		setLoading(false);
+		startInputRef.current?.clear();
+		destinationInputRef.current?.clear();
+	};
 
-      try {
-        if ( !selectedDate ){
-          console.error("date is not found")
-        }
+	const requestLocationPermission = async () => {
+		const { status } = await Location.requestForegroundPermissionsAsync();
+		if (status !== "granted") {
+			Alert.alert("Permission Denied", "Enable location permissions to continue.");
+			return false;
+		}
+		return true;
+	};
 
-        if ( !selectedTime ){
-          console.error("time is not found")
-        }
-        const googleTime = toGoogleTime(selectedDate, selectedTime);
 
-        
-        const response = await axios.get(
-          `${baseUrl}/api/getRoutes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}&startTime=${selectedTime}&startDate=${selectedDate}&googleTime=${googleTime}`
-        );
-        setApiResponse(response.data);
-      } catch (error) {
-        console.error("Error fetching route data:", error);
-        setApiResponse(null);
-      }
+	const reverseGeocode = async (latitude: number, longitude: number) => {
+		const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${Config.GOOGLE_API_KEY}`;
 
-    } catch (error) {
-      console.error("Error fetching route data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+		try {
+			const response = await fetch(url);
+			const data = await response.json();
+			if (data.status === "OK" && data.results.length > 0) {
+				console.log(data.results[0].formatted_address)
+				setStartAddress(data.results[0].formatted_address);
+			} else {
+				Alert.alert("Error", "Failed to get address");
+			}
+		} catch (error) {
+			console.error("Geocoding Error:", error);
+			Alert.alert("Error", "Failed to fetch address");
+		}
+	};
 
-  useEffect(() => {
-      getLocation();
-    }, []);
+	const getLocation = async () => {
+		const hasPermission = await requestLocationPermission();
+		if (!hasPermission) return;
 
-  // Auto-fit the map to include all coordinates from the routes.
-  useEffect(() => {
-    if (apiResponse?.mapData) {
-      let allCoordinates: { latitude: number; longitude: number }[] = [];
-      apiResponse.mapData.forEach((route: any) => {
-        if (route.polyline) {
-          const coords = decodePolyline(route.polyline);
-          allCoordinates = allCoordinates.concat(coords);
-        }
-      });
-      if (allCoordinates.length && mapRef.current) {
-        mapRef.current.fitToCoordinates(allCoordinates, {
-          edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
-          animated: true,
-        });
-      }
-    }
-  }, [apiResponse]);
+		const position = await Location.getCurrentPositionAsync({});
+		setStartLat(position.coords.latitude);
+		setStartLong(position.coords.longitude);
 
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      {/* Map Layer */}
-      <MapView
-        ref={mapRef}
-        style={StyleSheet.absoluteFillObject}
-        initialRegion={{
-          latitude: startLat || 42.7296,
-          longitude: startLong || -73.6779,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        }}
-      >
-      {apiResponse?.mapData?.map((route: any, index: number) => {
-            const polylineColor = routeColors[index] || "gray";
-            return (
-              <React.Fragment key={index}>
-                {route.polyline && (
-                  <Polyline
-                    coordinates={decodePolyline(route.polyline)}
-                    strokeWidth={4}
-                    strokeColor={polylineColor}
-                  />
-                )}
-                {route.start && (
-                  <Marker coordinate={route.start}>
-                    <Callout>
-                      <View>
-                        <Text style={{ fontWeight: "bold" }}>
-                          Route {index + 1} Start
-                        </Text>
-                        <Text>Time: {route.duration}</Text>
-                        <Text>Distance: {route.distance} m</Text>
-                      </View>
-                    </Callout>
-                  </Marker>
-                )}
-                {route.end && (
-                  <Marker coordinate={route.end}>
-                    <Callout>
-                      <View>
-                        <Text style={{ fontWeight: "bold" }}>
-                          Route {index + 1} End
-                        </Text>
-                        <Text>Time: {route.duration}</Text>
-                        <Text>Distance: {route.distance} m</Text>
-                      </View>
-                    </Callout>
-                  </Marker>
-                )}
-              </React.Fragment>
-            );
-          })}
-        </MapView>
+		console.log("Coordinates:", position.coords.latitude, position.coords.longitude);
 
-      {/* Floating UI Overlay */}
-      <View style={styles.overlayContainer} pointerEvents="box-none">
+		console.log("Google API called");
+		await reverseGeocode(position.coords.latitude, position.coords.longitude);
+	};
 
-      <View style={styles.inputWrapper}>
-          <LocationInput
-            placeholder={startAddress || "Enter starting address"}
-            setAddress={setStartAddress}
-            setLat={setStartLat}
-            setLong={setStartLong}
-            inputRef={startInputRef}
-            header=""
-          />
-        </View>
-        
-        <View style={styles.inputWrapper}>
-          <LocationInput
-            placeholder="Enter destination address"
-            setAddress={setDestinationAddress}
-            setLat={setDestinationLat}
-            setLong={setDestinationLong}
-            inputRef={destinationInputRef}
-            header=""
-          />
-        </View>
+	const getRoutes = async () => {
+		if (!startLat || !startLong || !destinationLat || !destinationLong) {
+			alert("Please select valid addresses before searching for routes.");
+			return;
+		}
+		setLoading(true);
+		try {
+			console.log("Start Coords:", startLat, startLong);
+			console.log("Destination Coords:", destinationLat, destinationLong);
 
-        <View style={styles.routeButtonRow}>
-          <TouchableOpacity style={styles.button} onPress={getRoutes}>
-            <Text style={styles.buttonText}>Find Routes</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={clearOptions}>
-            <Text style={styles.buttonText}>Clear</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+			try {
+				if (!selectedDate) {
+					console.error("date is not found")
+				}
 
-      {/* Bottom Fixed Info Card */}
-      <View style={styles.fixedInfoContainer} pointerEvents="box-none">
-        <View style={styles.infoCard}>
-          <View style={styles.locationRow}>
-            <Text style={styles.locationTitle}>Troy, NY</Text>
-            <View style={styles.changeStartButton}>
-              <Button
-                title="Change Start"
-                onPress={() => router.push("/changeStart")}
-                color="#fff"
-              />
-            </View>
+				if (!selectedTime) {
+					console.error("time is not found")
+				}
+				const googleTime = toGoogleTime(selectedDate, selectedTime);
 
-            <View style={styles.changeStartButton}>
-            <Button
-              title="Change Time"
-              onPress={() => setShowTimePicker(true)}
-              color="#fff"
-            />
-            </View>
-          </View>
-          <Text style={styles.weatherInfo}>60° Mostly Clear</Text>
-          <Text style={styles.alertTitle}>Severe Weather Alerts</Text>
-          <Text style={styles.alertSubtitle}>Wind Advisory, Troy, NY</Text>
-          <View style={styles.weatherAlertsButton}>
-            <Button
-              title="Weather Alerts"
-              onPress={() => router.push("/settings")}
-              color="#fff"
-            />
-          </View>
-        </View>
 
-        {/* DATA DISPLAY THING */}
-        {apiResponse?.routes?.length > 0 && (
-        <View style={styles.routeScrollWrapper}>
-          <ScrollView>
-            {apiResponse.routes.map((route: any, index: number) => (
-              <View key={index} style={styles.routeCard}>
-                <Text style={styles.routeTitle}>
-                  {routeColors[index % routeColors.length].charAt(0).toUpperCase() +
-                    routeColors[index % routeColors.length].slice(1)} Route
-                </Text>
-                <Text>
-                  {JSON.stringify(
-                    route,
-                    (key, value) => (key === "polyline" ? undefined : value),
-                    2
-                  )}
-                </Text>
-              </View>
-            ))}
-          </ScrollView>
-        </View>
-      )}
+				const response = await axios.get(
+					`${baseUrl}/api/getRoutes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}&startTime=${selectedTime}&startDate=${selectedDate}&googleTime=${googleTime}`
+				);
+				setApiResponse(response.data);
+			} catch (error) {
+				console.error("Error fetching route data:", error);
+				setApiResponse(null);
+			}
 
-      </View>
-    
-      <DateTimeSelector
-        visible={showTimePicker}
-        onClose={() => setShowTimePicker(false)}
-        onConfirm={(date, time) => {
-          
-          console.log("Selected date:", date);
-          console.log("Selected time:", time.toLocaleTimeString());
-          setSelectedDate(formattedToday);
-          setSelectedTime(time);
-          setShowTimePicker(false);
-      }}
-    />
+		} catch (error) {
+			console.error("Error fetching route data:", error);
+		} finally {
+			setLoading(false);
+		}
+	};
 
-    </SafeAreaView>
-  );
+	useEffect(() => {
+		getLocation()
+	}, [])
+
+	useEffect(() => {
+		if (apiResponse?.mapData) {
+			let allCoordinates = []
+			const selected = apiResponse.mapData[selectedRouteIndex]
+			if (selected?.polyline) {
+				allCoordinates = decodePolyline(selected.polyline)
+			}
+			if (mapRef.current && allCoordinates.length > 0) {
+				mapRef.current.fitToCoordinates(allCoordinates, {
+					edgePadding: { top: 30, bottom: 180, left: 30, right: 30 },
+					animated: true,
+				})
+			}
+		}
+	}, [apiResponse, selectedRouteIndex])
+
+	if (showSplash) {
+		return <SplashScreen onFinish={() => setShowSplash(false)} />
+	}
+
+	return (
+		<View style={styles.safeArea}>
+			<View style={styles.container}>
+				<View style={styles.mapContainer}>
+					<MapView
+						ref={mapRef}
+						style={StyleSheet.absoluteFillObject}
+						initialRegion={{
+							latitude: startLat || 42.7296,
+							longitude: startLong || -73.6779,
+							latitudeDelta: 0.01,
+							longitudeDelta: 0.01,
+						}}
+					>
+						{apiResponse?.mapData && apiResponse.mapData[selectedRouteIndex] && (
+							<React.Fragment>
+								<Polyline
+									coordinates={decodePolyline(apiResponse.mapData[selectedRouteIndex].polyline)}
+									strokeWidth={4}
+									strokeColor={routeColors[selectedRouteIndex % routeColors.length]}
+								/>
+								{(() => {
+									const decoded = decodePolyline(apiResponse.mapData[selectedRouteIndex].polyline)
+									return (
+										<>
+											{decoded.length > 0 && (
+												<>
+													<Marker coordinate={decoded[0]} pinColor="green" />
+													<Marker coordinate={decoded[decoded.length - 1]} pinColor="red" />
+												</>
+											)}
+										</>
+									)
+								})()}
+							</React.Fragment>
+						)}
+					</MapView>
+				</View>
+				{!apiResponse && (
+					<View style={[styles.overlayContainer, { top: 0 }]}>
+						<View style={styles.inputsContainer}>
+							<Animated.View
+								style={{
+									opacity: slideAnim,
+									transform: [
+										{
+											translateY: slideAnim.interpolate({
+												inputRange: [0, 1],
+												outputRange: [-20, 0],
+											}),
+										},
+									],
+								}}
+							>
+								{showStartInput && (
+									<SafeAreaView style={{ top: insets.top - 80 }}>
+										<View style={[styles.inputWrapper, { marginBottom: 8 }]}>
+											<LocationInput
+												placeholder={startAddress || 'Enter starting address'}
+												setAddress={setStartAddress}
+												setLat={setStartLat}
+												setLong={setStartLong}
+												inputRef={startInputRef}
+												header=""
+											/>
+										</View>
+									</SafeAreaView>
+								)}
+							</Animated.View>
+							<SafeAreaView style={{ top: insets.top - 80 }}>
+								<View style={styles.inputWrapper}>
+									<LocationInput
+										placeholder="Enter destination address"
+										setAddress={setDestinationAddress}
+										setLat={setDestinationLat}
+										setLong={setDestinationLong}
+										inputRef={destinationInputRef}
+										header=""
+									/>
+								</View>
+							</SafeAreaView>
+						</View>
+
+						<View style={styles.routeButtonRow}>
+							<TouchableOpacity style={styles.button} onPress={getRoutes}>
+								<Text style={styles.buttonText}>Find Routes</Text>
+							</TouchableOpacity>
+							<TouchableOpacity style={styles.button} onPress={clearOptions}>
+								<Text style={styles.buttonText}>Clear</Text>
+							</TouchableOpacity>
+						</View>
+					</View>
+				)}
+
+				<View style={styles.fixedInfoContainer}>
+					{!apiResponse ? (
+						<View style={styles.infoCard}>
+							<View style={styles.locationRow}>
+								<Text style={styles.locationTitle}>Troy, NY</Text>
+								<View style={[styles.changeStartButton, { width: 150 }]}>
+									<Button
+										title={isChangingStart ? 'Cancel' : 'Change Start'}
+										onPress={toggleChangeStart}
+										color="#fff"
+									/>
+								</View>
+								<View style={styles.changeStartButton}>
+									<Button
+										title="Change Time"
+										onPress={() => setShowTimePicker(true)}
+										color="#fff"
+									/>
+								</View>
+							</View>
+							<Text style={styles.weatherInfo}>60Â° Mostly Clear</Text>
+							<Text style={styles.alertTitle}>Severe Weather Alerts</Text>
+							<Text style={styles.alertSubtitle}>Wind Advisory, Troy, NY</Text>
+							<View style={styles.weatherAlertsButton}>
+								<Button
+									title="Weather Alerts"
+									onPress={() => router.push('/settings')}
+									color="#fff"
+								/>
+							</View>
+						</View>
+					) : (
+						<Animated.View
+							style={{
+								transform: [
+									{
+										translateY: summaryAnim.interpolate({
+											inputRange: [0, 1],
+											outputRange: [300, 0], // slide up from bottom
+										}),
+									},
+								],
+							}}
+						>
+							<RouteSummaryCard
+								start={startAddress}
+								destination={destinationAddress}
+								arrival={'11:45 PM'}
+								weatherStats={[
+									{ label: 'Rainfall', value: '20%' },
+									{ label: 'Snowfall', value: '0%' },
+									{ label: 'After sunset', value: '60%' },
+								]}
+								onStartTrip={() => console.log('Start Trip')}
+								onCancel={() => {
+									summaryAnim.setValue(0) // reset animation
+									setApiResponse(null)
+								}}
+								routes={apiResponse.mapData}
+								selectedRouteIndex={selectedRouteIndex}
+								setSelectedRouteIndex={setSelectedRouteIndex}
+								routeColors={routeColors}
+								currentTime={selectedTime}
+							/>
+						</Animated.View>
+					)}
+				</View>
+
+				<DateTimeSelector
+					visible={showTimePicker}
+					onClose={() => setShowTimePicker(false)}
+					onConfirm={(date, time) => {
+						setSelectedDate(date)
+						setSelectedTime(time)
+						setShowTimePicker(false)
+					}}
+				/>
+			</View>
+		</View>
+	)
 }
 
 const styles = StyleSheet.create({
-  routeScrollWrapper: {
-    maxHeight: 200,      
-    marginTop: 10,
-  },  
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  overlayContainer: {
-    position: "absolute",
-    top: 40,
-    left: 16,
-    right: 16,
-    zIndex: 1,
-  },
-  inputWrapper: {
-    backgroundColor: "transparent",
-    padding: 10,
-    borderRadius: 10,
-    marginBottom: 10,
-    elevation: 3,
-  },  
-  routeButtonRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 10,
-    backgroundColor: "#007bff",
-    borderRadius: 10,
-    padding: 10,
-  },
-  routesContainer: {
-    marginTop: 10,
-  },
-  routeCard: {
-    backgroundColor: "#fff",
-    borderColor: "#ddd",
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 15,
-    marginBottom: 10,
-  },
-  routeTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 5,
-  },
-  fixedInfoContainer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    zIndex: 2,
-  },
-  infoCard: {
-    backgroundColor: "#fff",
-    width: "100%",
-    padding: 16,
-  },
-  locationRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  locationTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  weatherInfo: {
-    fontSize: 16,
-    marginBottom: 8,
-  },
-  alertTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "red",
-    marginBottom: 4,
-  },
-  alertSubtitle: {
-    fontSize: 14,
-    marginBottom: 16,
-  },
-  changeStartButton: {
-    backgroundColor: "#007bff",
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  weatherAlertsButton: {
-    backgroundColor: "#007bff",
-    borderRadius: 12,
-    overflow: "hidden",
-    marginTop: 8,
-  },
-  button: {
-    flex: 1,
-    backgroundColor: "#007bff",
-    paddingVertical: 10,
-    marginHorizontal: 5,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-  
-});
+	safeArea: {
+		flex: 1,
+		backgroundColor: '#fff',
+	},
+	container: {
+		flex: 1,
+		flexDirection: 'column',
+	},
+	mapContainer: {
+		flex: 1,
+	},
+	inputsOverlay: {
+		position: 'absolute',
+		top: 40,
+		left: 16,
+		right: 16,
+		zIndex: 1,
+		borderRadius: 16,
+	},
+	overlayContainer: {
+		position: 'absolute',
+		left: 16,
+		right: 16,
+		zIndex: 1,
+	},
+	inputsContainer: {
+		flexDirection: 'column',
+		padding: 0,
+		margin: 0,
+		borderRadius: 16,
+	},
+	inputWrapper: {
+		backgroundColor: 'transparent',
+		paddingVertical: 10,
+		paddingHorizontal: 10,
+		borderRadius: 16,
+		marginBottom: 0,
+		elevation: 3,
+	},
+	routeButtonRow: {
+		flexDirection: 'row',
+		justifyContent: 'space-between',
+		marginBottom: 10,
+		backgroundColor: '#007bff',
+		borderRadius: 16,
+		padding: 10,
+	},
+	button: {
+		flex: 1,
+		backgroundColor: '#007bff',
+		paddingVertical: 10,
+		marginHorizontal: 5,
+		borderRadius: 16,
+		alignItems: 'center',
+	},
+	buttonText: {
+		color: '#fff',
+		fontWeight: 'bold',
+		fontSize: 16,
+	},
+	fixedInfoContainer: {
+		position: 'absolute',
+		bottom: 0,
+		left: 0,
+		right: 0,
+		zIndex: 2,
+		borderRadius: 16,
+	},
+	infoCard: {
+		backgroundColor: '#fff',
+		width: '100%',
+		padding: 16,
+	},
+	locationRow: {
+		flexDirection: 'row',
+		justifyContent: 'space-between',
+		alignItems: 'center',
+		marginBottom: 8,
+	},
+	locationTitle: { fontSize: 18, fontWeight: 'bold' },
+	weatherInfo: { fontSize: 16, marginBottom: 8 },
+	alertTitle: {
+		fontSize: 16,
+		fontWeight: 'bold',
+		color: 'red',
+		marginBottom: 4,
+	},
+	alertSubtitle: { fontSize: 14, marginBottom: 16 },
+	changeStartButton: {
+		backgroundColor: '#007bff',
+		borderRadius: 16,
+		overflow: 'hidden',
+	},
+	weatherAlertsButton: {
+		backgroundColor: '#007bff',
+		borderRadius: 16,
+		overflow: 'hidden',
+		marginTop: 8,
+	},
+})
