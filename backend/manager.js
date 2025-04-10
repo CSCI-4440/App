@@ -5,8 +5,6 @@ class Manager {
   constructor() {
     // Store all routes here
     this.routes = [];
-    this.routesDiffTime = [];
-    this.timeSuggestions = [-6, -3, -2, -1, 1, 2, 3, 6];
   }
 
   /**
@@ -16,54 +14,6 @@ class Manager {
   addRoute(route) {
     this.routes.push(route);
   }
-
-  isPast(time) {
-    const now = new Date();
-    return time.getTime() <= now.getTime();
-  }
-
-  updateTime(oldTime, intervalHours)
-  {
-    const updated = new Date(oldTime); // Clone to avoid mutating original
-    updated.setHours(updated.getHours() + intervalHours);
-    return updated;
-  }
-
-  
-  addRoutesDiffTime() {
-    let baseTime = this.routes[0].startDate;
-    for (let changeTime of this.timeSuggestions){
-      let newStartTime = this.updateTime(baseTime, changeTime)
-      if (this.isPast(newStartTime)){
-        continue;
-      }
-      for (let route of this.routes){
-        let newStartTimeRoute = Route.clone(route);
-        newStartTimeRoute.setStartDate = newStartTime;
-        newStartTimeRoute.updateTimesAndConditions(changeTime);
-        //HAVE TO FIGURE HOW TO UPDATE CONDITIONS
-        newStartTimeRoute.calculateWeatherScore();
-        this.routesDiffTime.push(newStartTimeRoute);
-      }
-    }
-  }
-
-  getBestTimedRoute() {
-    // Determine the maximum values for time and distance across all routes.
-    const maxTime = Math.max(...this.routesDiffTime.map(r => r.time));
-    const maxDistance = Math.max(...this.routesDiffTime.map(r => r.distance));
-
-    // Compute and attach a score for each route.
-    this.routesDiffTime.forEach(route => {
-      route.score = Manager.scoreRoute(route, maxTime, maxDistance);
-    });
-
-    // Sort the routes by score (highest first) and return the top 'count' routes.
-    const sortedRoutes = this.routesDiffTime.sort((a, b) => b.score - a.score);
-    return sortedRoutes.slice(0, 1);
-  }
-
-
 
 
   /**
@@ -119,11 +69,11 @@ class Manager {
     
 
     // Log the weather breakdown if it's available.
-    // if (bestRoute.weatherBreakdown) {
-    //   console.log("Weather Condition Breakdown:", bestRoute.weatherBreakdown);
-    // } else {
-    //   console.log("No weather breakdown available.");
-    // }
+    if (bestRoute.weatherBreakdown) {
+      console.log("Weather Condition Breakdown:", bestRoute.weatherBreakdown);
+    } else {
+      console.log("No weather breakdown available.");
+    }
 
     return bestRoute;
   }
