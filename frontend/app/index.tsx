@@ -1,4 +1,12 @@
-// index.tsx
+/**
+ * @file index.tsx
+ * @description
+ * STRATUS App Main Component
+ * This component serves as the main entry point for the STRATUS application.
+ * It includes the map view, location input fields, route selection, and weather alerts.
+ * The component uses React Native, Expo, and various libraries for location services, map rendering, and UI components.
+ */
+
 import React, { useState, useRef, useEffect } from 'react'
 import {
 	View,

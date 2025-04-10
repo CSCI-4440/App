@@ -1,3 +1,10 @@
+/**
+ * @file DateTimeSelector.tsx
+ * @description A React Native component that allows users to select a date and time.
+ * It uses a modal to display a calendar for date selection and a time picker for time selection.
+ * The selected date and time are passed back to the parent component via a callback function.
+ */
+
 import React, { useState } from 'react'
 import { Modal, View, StyleSheet, Text, Button, Platform } from 'react-native'
 import { Calendar } from 'react-native-calendars'

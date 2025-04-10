@@ -1,3 +1,10 @@
+/**
+ * @file Settings.tsx
+ * @description A React Native component that provides a settings screen for the STRATUS app.
+ * It allows users to toggle alerts for snow, rain, and wind, as well as the option to use the current location.
+ * The component is styled using React Native's StyleSheet and includes a button to save the settings.
+ * */
+
 import React, { useState } from 'react'
 import { View, Text, Switch, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native'
 import { useRouter } from 'expo-router'

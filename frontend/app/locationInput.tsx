@@ -1,3 +1,10 @@
+/**
+ * @file LocationInput.tsx
+ * @description A React Native component that provides an input field for users to enter a location.
+ * It uses the Google Places API to provide autocomplete suggestions for locations.
+ * The selected location's address, latitude, and longitude are passed back to the parent component via callback functions.
+ */
+
 import React from 'react'
 import { View, StyleSheet } from 'react-native'
 import { Paragraph, TextInput } from 'react-native-paper'

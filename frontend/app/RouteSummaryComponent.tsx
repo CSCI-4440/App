@@ -1,3 +1,13 @@
+/**
+ * @file RouteSummaryComponent.tsx
+ * @description A React Native component that displays a summary of the selected route for a trip.
+ * It includes information such as start and destination locations, estimated arrival time, distance, and weather conditions.
+ * The component also provides buttons to start the trip or cancel it.
+ * It allows users to select between multiple routes if available.
+ * The component is styled using React Native's StyleSheet and includes a tabbed interface for route selection.
+ * The weather information is displayed in a scrollable view under the route details.
+ */
+
 import React from 'react'
 import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native'
 import { Text } from 'react-native-paper'

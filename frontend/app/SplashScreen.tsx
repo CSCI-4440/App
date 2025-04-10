@@ -1,3 +1,9 @@
+/**
+ * @file SplashScreen.tsx
+ * @description A React Native component that displays a splash screen with an animated weather icon and a static logo image.
+ * After a delay, the logo image and text fade out, and the onFinish callback is called to navigate to the main app.
+ */
+
 import React, { useEffect, useRef } from 'react'
 import { View, StyleSheet, Animated, Easing, Text, Dimensions, Image } from 'react-native'
 
