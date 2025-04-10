@@ -65,6 +65,7 @@ export default function Index() {
 	const mapRef = useRef<MapView>(null)
 	const startInputRef = useRef<any>(null)
 	const destinationInputRef = useRef<any>(null)
+	const polylineRef = useRef<any>(null)
 
 	// Colors for route lines
 	const routeColors = ['blue', 'green', 'orange', 'red', 'purple']
@@ -281,6 +282,15 @@ export default function Index() {
 		}
 	}, [apiResponse, selectedRouteIndex])
 
+	useEffect(() => {
+		if (polylineRef.current) {
+			// Trigger a tiny update to force re-render
+			polylineRef.current.setNativeProps({
+				strokeWidth: 4.01, // Change slightly to force redraw
+			})
+		}
+	}, [apiResponse, selectedRouteIndex])
+
 	// Show the splash screen for 2 seconds
 	if (showSplash) {
 		return <SplashScreen onFinish={() => setShowSplash(false)} />
@@ -304,6 +314,7 @@ export default function Index() {
 						{apiResponse?.mapData && apiResponse.mapData[selectedRouteIndex] && (
 							<React.Fragment>
 								<Polyline
+									ref={polylineRef}
 									coordinates={decodePolyline(apiResponse.mapData[selectedRouteIndex].polyline)}
 									strokeWidth={4}
 									strokeColor={routeColors[selectedRouteIndex % routeColors.length]}

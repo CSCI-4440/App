@@ -112,9 +112,16 @@ const RouteSummaryCard = ({
 	// Render the route summary card
 	return (
 		<View style={styles.card}>
-			{routes.length > 1 && (
-				<View style={styles.tabRow}>
-					{routes.map((_, index) => {
+			{/* Always show tab bar, even for one route */}
+			<View style={styles.tabRow}>
+				{routes.length === 1 ? (
+					<View style={[styles.tab, { backgroundColor: routeColors[0] }]}>
+						<Text style={[styles.tabText, { color: '#fff' }]}>
+							{routeColors[0].charAt(0).toUpperCase() + routeColors[0].slice(1)}
+						</Text>
+					</View>
+				) : (
+					routes.map((_, index) => {
 						const color = routeColors[index % routeColors.length]
 						return (
 							<TouchableOpacity
@@ -122,26 +129,22 @@ const RouteSummaryCard = ({
 								onPress={() => setSelectedRouteIndex(index)}
 								style={[
 									styles.tab,
-									{
-										backgroundColor: selectedRouteIndex === index ? color : '#eee',
-									},
+									{ backgroundColor: selectedRouteIndex === index ? color : '#eee' },
 								]}
 							>
 								<Text
 									style={[
 										styles.tabText,
-										{
-											color: selectedRouteIndex === index ? '#fff' : '#333',
-										},
+										{ color: selectedRouteIndex === index ? '#fff' : '#333' },
 									]}
 								>
 									{color.charAt(0).toUpperCase() + color.slice(1)}
 								</Text>
 							</TouchableOpacity>
 						)
-					})}
-				</View>
-			)}
+					})
+				)}
+			</View>
 
 			<ScrollView style={styles.scroll}>
 				<Text style={styles.routeTitle}>
@@ -153,7 +156,6 @@ const RouteSummaryCard = ({
 				<Text style={styles.detail}>
 					Distance: {selectedRoute?.distance ? metersToMiles(selectedRoute.distance) : 'N/A'}
 				</Text>
-
 				<Text style={styles.detail}>
 					Arrival:{' '}
 					{selectedRoute?.duration
@@ -246,16 +248,9 @@ const styles = StyleSheet.create({
 		marginHorizontal: 4,
 		borderRadius: 20,
 	},
-	activeTab: {
-		backgroundColor: '#007bff',
-	},
 	tabText: {
 		fontSize: 14,
 		color: '#333',
-	},
-	activeTabText: {
-		color: '#fff',
-		fontWeight: 'bold',
 	},
 })
 
