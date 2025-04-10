@@ -24,42 +24,41 @@ import * as Location from 'expo-location'
 import Config from '../config'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-
-const baseUrl = "http://129.161.138.122:3000"
+const baseUrl = 'http://129.161.137.163:3000'
 
 export default function Index() {
-	const router = useRouter();
+	const router = useRouter()
 	const insets = useSafeAreaInsets()
 
 	const [showSplash, setShowSplash] = useState(true)
 
-	const [startAddress, setStartAddress] = useState("");
-	const [destinationAddress, setDestinationAddress] = useState("");
+	const [startAddress, setStartAddress] = useState('')
+	const [destinationAddress, setDestinationAddress] = useState('')
 
-	const [startLat, setStartLat] = useState<number | null>(42.7284117);
-	const [startLong, setStartLong] = useState<number | null>(-73.69178509999999);
-	const [destinationLat, setDestinationLat] = useState<number | null>(null);
-	const [destinationLong, setDestinationLong] = useState<number | null>(null);
+	const [startLat, setStartLat] = useState<number | null>(42.7284117)
+	const [startLong, setStartLong] = useState<number | null>(-73.69178509999999)
+	const [destinationLat, setDestinationLat] = useState<number | null>(null)
+	const [destinationLong, setDestinationLong] = useState<number | null>(null)
 
-	const [apiResponse, setApiResponse] = useState<any>(null);
-	const [loading, setLoading] = useState<boolean>(false);
+	const [apiResponse, setApiResponse] = useState<any>(null)
+	const [loading, setLoading] = useState<boolean>(false)
 
-	const startInputRef = useRef<any>(null);
-	const destinationInputRef = useRef<any>(null);
+	const startInputRef = useRef<any>(null)
+	const destinationInputRef = useRef<any>(null)
 
-	const [selectedTime, setSelectedTime] = useState<Date>(new Date());
-	const [showTimePicker, setShowTimePicker] = useState<boolean>(false);
+	const [selectedTime, setSelectedTime] = useState<Date>(new Date())
+	const [showTimePicker, setShowTimePicker] = useState<boolean>(false)
 
-	const today = new Date();
-	const formattedToday = today.toISOString().split('T')[0]; // "YYYY-MM-DD"
+	const today = new Date()
+	const formattedToday = today.toISOString().split('T')[0] // "YYYY-MM-DD"
 
-	const [selectedDate, setSelectedDate] = useState<string>(formattedToday);
-	const mapRef = useRef<MapView>(null);
+	const [selectedDate, setSelectedDate] = useState<string>(formattedToday)
+	const mapRef = useRef<MapView>(null)
 
 	const polylineRef = useRef<any>(null)
 
-	const routeColors = ["blue", "green", "orange", "red", "purple"];
-	const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
+	const routeColors = ['blue', 'green', 'orange', 'red', 'purple']
+	const [selectedRouteIndex, setSelectedRouteIndex] = useState(0)
 
 	const [isChangingStart, setIsChangingStart] = useState(false)
 	const [showStartInput, setShowStartInput] = useState(false)
@@ -117,9 +116,8 @@ export default function Index() {
 	function toGoogleTime(dateStr: string, time: Date): string {
 		const t = new Date(time.getTime() + 10 * 60 * 1000)
 
-		return t.toISOString();
+		return t.toISOString()
 	}
-
 
 	const clearOptions = () => {
 		setStartAddress('')
@@ -136,32 +134,31 @@ export default function Index() {
 	}
 
 	const requestLocationPermission = async () => {
-		const { status } = await Location.requestForegroundPermissionsAsync();
-		if (status !== "granted") {
-			Alert.alert("Permission Denied", "Enable location permissions to continue.");
-			return false;
+		const { status } = await Location.requestForegroundPermissionsAsync()
+		if (status !== 'granted') {
+			Alert.alert('Permission Denied', 'Enable location permissions to continue.')
+			return false
 		}
-		return true;
-	};
-
+		return true
+	}
 
 	const reverseGeocode = async (latitude: number, longitude: number) => {
-		const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${Config.GOOGLE_API_KEY}`;
+		const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${Config.GOOGLE_API_KEY}`
 
 		try {
-			const response = await fetch(url);
-			const data = await response.json();
-			if (data.status === "OK" && data.results.length > 0) {
+			const response = await fetch(url)
+			const data = await response.json()
+			if (data.status === 'OK' && data.results.length > 0) {
 				console.log(data.results[0].formatted_address)
-				setStartAddress(data.results[0].formatted_address);
+				setStartAddress(data.results[0].formatted_address)
 			} else {
-				Alert.alert("Error", "Failed to get address");
+				Alert.alert('Error', 'Failed to get address')
 			}
 		} catch (error) {
-			console.error("Geocoding Error:", error);
-			Alert.alert("Error", "Failed to fetch address");
+			console.error('Geocoding Error:', error)
+			Alert.alert('Error', 'Failed to fetch address')
 		}
-	};
+	}
 
 	const getLocation = async () => {
 		const hasPermission = await requestLocationPermission()
@@ -174,29 +171,28 @@ export default function Index() {
 
 	const getRoutes = async () => {
 		if (!startLat || !startLong || !destinationLat || !destinationLong) {
-			alert("Please select valid addresses before searching for routes.");
-			return;
+			alert('Please select valid addresses before searching for routes.')
+			return
 		}
 
-		setLoading(true);
+		setLoading(true)
 		try {
-			console.log("Start Coords:", startLat, startLong);
-			console.log("Destination Coords:", destinationLat, destinationLong);
+			console.log('Start Coords:', startLat, startLong)
+			console.log('Destination Coords:', destinationLat, destinationLong)
 
 			if (!selectedDate) {
-				console.error("date is not found")
+				console.error('date is not found')
 			}
 
 			if (!selectedTime) {
-				console.error("time is not found")
+				console.error('time is not found')
 			}
-			const googleTime = toGoogleTime(selectedDate, selectedTime);
-
+			const googleTime = toGoogleTime(selectedDate, selectedTime)
 
 			const response = await axios.get(
-				`${baseUrl}/api/getRoutes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}&startTime=${selectedTime}&startDate=${selectedDate}&googleTime=${googleTime}`
-			);
-			
+				`${baseUrl}/api/getRoutes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}&startTime=${selectedTime}&startDate=${selectedDate}&googleTime=${googleTime}`,
+			)
+
 			setApiResponse({
 				...response.data,
 				mapData: response.data.mapData ?? response.data.routes,
@@ -210,15 +206,14 @@ export default function Index() {
 				useNativeDriver: true,
 			}).start()
 			setSelectedRouteIndex(0)
-
 		} catch (error) {
-			console.error("Error fetching route data:", error);
-			setApiResponse(null);
-			summaryAnim.setValue(0);
+			console.error('Error fetching route data:', error)
+			setApiResponse(null)
+			summaryAnim.setValue(0)
 		} finally {
-			setLoading(false);
+			setLoading(false)
 		}
-	};
+	}
 
 	useEffect(() => {
 		getLocation()
@@ -241,13 +236,13 @@ export default function Index() {
 	}, [apiResponse, selectedRouteIndex])
 
 	useEffect(() => {
-        if (polylineRef.current) {
-            // Trigger a tiny update to force re-render
-            polylineRef.current.setNativeProps({
-                strokeWidth: 4.01,
-            })
-        }
-    }, [apiResponse, selectedRouteIndex])
+		if (polylineRef.current) {
+			// Trigger a tiny update to force re-render
+			polylineRef.current.setNativeProps({
+				strokeWidth: 4.01,
+			})
+		}
+	}, [apiResponse, selectedRouteIndex])
 
 	if (showSplash) {
 		return <SplashScreen onFinish={() => setShowSplash(false)} />
@@ -257,40 +252,46 @@ export default function Index() {
 		<View style={styles.safeArea}>
 			<View style={styles.container}>
 				<View style={styles.mapContainer}>
-				<MapView
-                        ref={mapRef}
-                        style={StyleSheet.absoluteFillObject}
-                        initialRegion={{
-                            latitude: startLat || 42.7296,
-                            longitude: startLong || -73.6779,
-                            latitudeDelta: 0.01,
-                            longitudeDelta: 0.01,
-                        }}
-                    >
-                        {apiResponse?.mapData && apiResponse.mapData[selectedRouteIndex] && (
-                            <React.Fragment>
-                                <Polyline
-                                    ref={polylineRef}
-                                    coordinates={decodePolyline(apiResponse.mapData[selectedRouteIndex].polyline)}
-                                    strokeWidth={4}
-                                    strokeColor={routeColors[selectedRouteIndex % routeColors.length]}
-                                />
-                                {(() => {
-                                    const decoded = decodePolyline(apiResponse.mapData[selectedRouteIndex].polyline)
-                                    return (
-                                        <>
-                                            {decoded.length > 0 && (
-                                                <>
-                                                    <Marker coordinate={decoded[0]} pinColor="green" />
-                                                    <Marker coordinate={decoded[decoded.length - 1]} pinColor="red" />
-                                                </>
-                                            )}
-                                        </>
-                                    )
-                                })()}
-                            </React.Fragment>
-                        )}
-                    </MapView>
+					{loading && (
+						<View style={styles.loadingOverlay}>
+							<ActivityIndicator size="large" color="#007bff" />
+							<Text style={styles.loadingText}>Finding safest routes...</Text>
+						</View>
+					)}
+					<MapView
+						ref={mapRef}
+						style={StyleSheet.absoluteFillObject}
+						initialRegion={{
+							latitude: startLat || 42.7296,
+							longitude: startLong || -73.6779,
+							latitudeDelta: 0.01,
+							longitudeDelta: 0.01,
+						}}
+					>
+						{apiResponse?.mapData && apiResponse.mapData[selectedRouteIndex] && (
+							<React.Fragment>
+								<Polyline
+									ref={polylineRef}
+									coordinates={decodePolyline(apiResponse.mapData[selectedRouteIndex].polyline)}
+									strokeWidth={4}
+									strokeColor={routeColors[selectedRouteIndex % routeColors.length]}
+								/>
+								{(() => {
+									const decoded = decodePolyline(apiResponse.mapData[selectedRouteIndex].polyline)
+									return (
+										<>
+											{decoded.length > 0 && (
+												<>
+													<Marker coordinate={decoded[0]} pinColor="green" />
+													<Marker coordinate={decoded[decoded.length - 1]} pinColor="red" />
+												</>
+											)}
+										</>
+									)
+								})()}
+							</React.Fragment>
+						)}
+					</MapView>
 				</View>
 				{!apiResponse && (
 					<View style={[styles.overlayContainer, { top: 0 }]}>
@@ -338,10 +339,19 @@ export default function Index() {
 						</View>
 
 						<View style={styles.routeButtonRow}>
-							<TouchableOpacity style={styles.button} onPress={getRoutes}>
+							<TouchableOpacity
+								style={[styles.button, loading && { opacity: 0.6 }]}
+								onPress={getRoutes}
+								disabled={loading}
+							>
 								<Text style={styles.buttonText}>Find Routes</Text>
 							</TouchableOpacity>
-							<TouchableOpacity style={styles.button} onPress={clearOptions}>
+
+							<TouchableOpacity
+								style={[styles.button, loading && { opacity: 0.6 }]}
+								onPress={clearOptions}
+								disabled={loading}
+							>
 								<Text style={styles.buttonText}>Clear</Text>
 							</TouchableOpacity>
 						</View>
@@ -368,9 +378,9 @@ export default function Index() {
 									/>
 								</View>
 							</View>
-							<Text style={styles.weatherInfo}>60Â° Mostly Clear</Text>
+							<Text style={styles.weatherInfo}>50°, Partly Cloudy</Text>
 							<Text style={styles.alertTitle}>Severe Weather Alerts</Text>
-							<Text style={styles.alertSubtitle}>Wind Advisory, Troy, NY</Text>
+							<Text style={styles.alertSubtitle}>None</Text>
 							<View style={styles.weatherAlertsButton}>
 								<Button
 									title="Weather Alerts"
@@ -431,6 +441,24 @@ export default function Index() {
 }
 
 const styles = StyleSheet.create({
+	loadingOverlay: {
+		position: 'absolute',
+		top: 0,
+		left: 0,
+		right: 0,
+		bottom: 0,
+		backgroundColor: 'rgba(255,255,255,0.8)',
+		justifyContent: 'center',
+		alignItems: 'center',
+		zIndex: 99,
+	},
+
+	loadingText: {
+		marginTop: 10,
+		fontSize: 16,
+		color: '#007bff',
+		fontWeight: '600',
+	},
 	safeArea: {
 		flex: 1,
 		backgroundColor: '#fff',
