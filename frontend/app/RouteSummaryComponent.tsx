@@ -85,6 +85,12 @@ const computeArrivalTime = (startTime: Date, durationInSeconds: number) => {
 	return arrival.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
+/**
+ * @function convertTo24Hour
+ * @description Converts a 12-hour time string to a 24-hour format.
+ * @param timeStr - The time string to be converted (e.g., "2:30 PM").
+ * @returns {string} - A string representing the time in 24-hour format (e.g., "14:30").
+ */
 const convertTo24Hour = (timeStr: string): string => {
 	if (!timeStr) return '00:00:00'
 
@@ -109,6 +115,15 @@ const convertTo24Hour = (timeStr: string): string => {
 	return `${hours}:${minutes}:${seconds}`
 }
 
+/**
+ * @function getPercentage
+ * @description Calculates the percentage of the trip completed after sunset.
+ * @param sunsetStr - The sunset time string in 12-hour format (e.g., "6:30 PM").
+ * @param arrivalStr - The arrival time string in 12-hour format (e.g., "8:00 PM").
+ * @param durationStr - The duration string (e.g., "30 min").
+ * @param currentTime - The current time as a Date object or string.
+ * @returns {string} - A string representing the percentage of the trip completed after sunset.
+ */
 const getPercentage = (
 	sunsetStr: string,
 	arrivalStr: string,
@@ -187,11 +202,6 @@ const getPercentage = (
 			100
 		console.log(`After sunset: ${percentAfterSunset.toFixed(1)}%`)
 		return `${percentAfterSunset.toFixed(1)}%`
-
-		console.log('DURATION (minutes):', durationMin)
-		console.log(`After sunset: ${percentage.toFixed(1)}%`)
-
-		return `${percentage.toFixed(1)}%`
 	} catch (error) {
 		console.error('Error in getPercentage function:', error)
 		return '0.0%' // Default return value if there's an error

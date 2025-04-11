@@ -4,6 +4,13 @@
  * It uses the Google Directions API to compute routes and enriches them with weather information.
  * @author RINER team
  * @date 2025-04-10
+ * @requires dotenv
+ * @requires express
+ * @requires axios
+ * @requires cors
+ * @requires Route
+ * @requires Manager
+ * @module changeStart
  */
 
 require("dotenv").config();
