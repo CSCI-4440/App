@@ -1,30 +1,30 @@
 name: CI
 
-# Trigger on pushes and pull requests targeting main
 on:
   push:
-    branches: 
-      - new-main
+    branches: [ "new-main" ]
   pull_request:
-    branches:
-      - new-main
+    branches: [ "new-main" ]
 
 jobs:
-  test:
+  test-backend:
     runs-on: ubuntu-latest
+
     steps:
-      # Check out the repository
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v2
 
-      # Set up Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '14'
-          
-      - name: Install Dependencies
-        run: npm install
+          node-version: 14
 
-      - name: Run Tests
+      # Run "npm install" in the backend folder
+      - name: Install Dependencies (Backend)
+        run: npm install
+        working-directory: backend
+
+      # Run "npm test" in the backend folder
+      - name: Run Tests (Backend)
         run: npm test
+        working-directory: backend
