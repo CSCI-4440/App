@@ -9,7 +9,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "test": "jest --watchAll",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "format": "npx prettier --write ."
   },
   "jest": {
     "preset": "jest-expo"
@@ -58,6 +59,7 @@
     "@types/react-test-renderer": "^18.3.0",
     "jest": "^29.7.0",
     "jest-expo": "~52.0.3",
+    "prettier": "^3.5.3",
     "react-test-renderer": "18.3.1",
     "supertest": "^7.1.0",
     "typescript": "^5.3.3"

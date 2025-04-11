@@ -6,5 +6,8 @@
 	"tabWidth": 2,
 	"useTabs": true,
 	"bracketSpacing": true,
-	"arrowParens": "always"
+	"arrowParens": "always",
+	"proseWrap": "always",
+	"endOfLine": "lf",
+	"embeddedLanguageFormatting": "auto"
 }
