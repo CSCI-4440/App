@@ -1,0 +1,30 @@
+name: CI
+
+# Trigger on pushes and pull requests targeting main
+on:
+  push:
+    branches: 
+      - new-main
+  pull_request:
+    branches:
+      - new-main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      # Check out the repository
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+          
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Tests
+        run: npm test
