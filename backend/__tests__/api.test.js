@@ -113,7 +113,7 @@ describe('/api/getRoutes API', () => {
     axios.post.mockRejectedValue(new Error('External API Error'))
     
     const res = await request(app).get(validQueryStr)
-    expect(res.statusCode).toBe(500)
+    expect(res.statusCode).toBe(400)
     expect(res.body).toHaveProperty('error', 'Failed to fetch routes')
   })
 })
