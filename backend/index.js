@@ -18,14 +18,13 @@ app.use(express.json());
 
 app.get("/api/getRoutes", async (req, res) => {
     console.log("Calling the Change Start API!");
-    const { startLat, startLong, destinationLat, destinationLong, startTime, startDate, googleTime } = req.query;
+    const { startLat, startLong, destinationLat, destinationLong, startTime, startDate, googleTime, settings } = req.query;
 
-    if (!startLat || !startLong || !destinationLat || !destinationLong || !googleTime || !startTime || !startDate) {
+    if (!startLat || !startLong || !destinationLat || !destinationLong || !googleTime || !startTime || !startDate || !settings) {
       return res.status(400).json({ error: "Missing required parameters" });
     }
 
     const dateObject = new Date(googleTime);
-    console.log("This is the current time:", dateObject);
    
     const url = "https://routes.googleapis.com/directions/v2:computeRoutes";
     const headers = {
@@ -52,12 +51,12 @@ app.get("/api/getRoutes", async (req, res) => {
       const responseRoutes = response.data.routes;
       const routes = [];
       const mapDetails = [];
-      const manager = new Manager();
+      const manager = new Manager(settings);
       
       for (const route of responseRoutes) {
         const legs = route.legs[0];
-        console.log("Added a route:");
         const r = new Route(legs, dateObject);
+
         
         // Set polyline directly
         r.polyline = route.polyline.encodedPolyline;
@@ -67,10 +66,11 @@ app.get("/api/getRoutes", async (req, res) => {
         await r.setSunsetTime();
 
         try {
-          await r.calculateWeatherScore();
+          await r.calculateWeatherScore(settings);
         } catch (error) {
           console.log(error)
         }
+
         
   
         // Push Route instance to scoring system
@@ -90,7 +90,8 @@ app.get("/api/getRoutes", async (req, res) => {
           weatherBreakdown: r.weatherBreakdown,
           score: r.score,
           departure: r.startDate.toISOString(),
-          sunsetTime: r.sunsetTime
+          sunsetTime: r.sunsetTime.toISOString(),
+          sunriseTime: r.sunriseTime.toISOString()
         });
       }
       
@@ -101,7 +102,7 @@ app.get("/api/getRoutes", async (req, res) => {
 
       manager.addRoutesDiffTime();
       const bestTimedRoute = manager.getBestTimedRoute()[0];
-      console.log(bestTimedRoute.weatherBreakdown);
+      console.log(1)
 
       mapDetails.push({
         distance: bestTimedRoute.distance,
@@ -114,8 +115,12 @@ app.get("/api/getRoutes", async (req, res) => {
         weatherBreakdown: bestTimedRoute.weatherBreakdown,
         score: bestTimedRoute.score,
         departure: bestTimedRoute.startDate.toISOString(),
-        sunsetTime: bestTimedRoute.sunsetTime
+        sunsetTime: bestTimedRoute.sunsetTime.toISOString(),
+        sunriseTime: bestTimedRoute.sunriseTime.toISOString()
       });
+      
+      console.log("Best", bestTimedRoute.sunsetTime);
+      console.log("Best", bestTimedRoute.sunriseTime);
       bestRoutes.push(bestTimedRoute);
       
       
@@ -130,7 +135,8 @@ app.get("/api/getRoutes", async (req, res) => {
           polyline: r.polyline,
           breakDown: r.weatherBreakdown,
           departure: r.startDate.toISOString(),
-          sunsetTime: r.sunsetTime
+          sunsetTime: r.sunsetTime.toISOString(),
+          sunriseTime: r.sunriseTime.toISOString()
         }));
 
         // console.log(formattedRoutes.length);

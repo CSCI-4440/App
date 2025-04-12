@@ -109,98 +109,69 @@ const convertTo24Hour = (timeStr: string): string => {
 	return `${hours}:${minutes}:${seconds}`;
 };
 
+const parseDuration = (durationStr: string): number => {
+	const hourMatch = durationStr.match(/(\d+)\s*hr/)
+	const minuteMatch = durationStr.match(/(\d+)\s*min/)
+
+	const hours = hourMatch ? parseInt(hourMatch[1]) : 0
+	const minutes = minuteMatch ? parseInt(minuteMatch[1]) : 0
+
+	return hours * 60 + minutes
+}
+
+const getArrivalTime = (departureTime: Date, durationInMinutes: number): Date => {
+	const arrival = new Date(departureTime.getTime() + durationInMinutes * 60 * 1000)
+	return arrival
+ }
+ 
+
+
 const getPercentage = (
-	sunsetStr: string,
+	sunset: Date,
+	sunrise: Date,
 	arrivalStr: string,
 	durationStr: string,
-	currentTime: Date | string
-  ): string => {
+	departure: Date
+): string => {
 	try {
-  
-	  // Convert sunset and arrival using the 24-hour conversion and fixed date
-	  const sunset = new Date(`1970-01-01T${convertTo24Hour(sunsetStr)}Z`);
-	  const arrival = new Date(`1970-01-01T${convertTo24Hour(arrivalStr)}Z`);
-  
-	  // Convert currentTime to a Date if needed and then normalize it to UTC
-	  let current: Date;
-	  if (typeof currentTime === "string") {
-		current = new Date(currentTime); // Convert string to Date
-	  } else {
-		current = currentTime; // If it's already a Date object
-	  }
+		
+		const durationMin = parseDuration(durationStr);
+		const date = `${departure.getFullYear()}-${departure.getMonth()}-`
+		
+		if (durationMin === 0) return '0.0%'
 
-	  // Adjust current time to UTC-4 by subtracting 4 hours
-	  const currentUTCMinus4 = new Date(current);
-	  currentUTCMinus4.setHours(currentUTCMinus4.getHours() - 5); // Adjust to UTC-4
-  
-	  // Extract only hours and minutes for current time
-	  const currentHour = currentUTCMinus4.getHours();
-	  const currentMinute = currentUTCMinus4.getMinutes();
-  
-	  // Normalize sunset and arrival times to hours and minutes only
-	  const sunsetHour = sunset.getHours();
-	  const sunsetMinute = sunset.getMinutes();
-	  const arrivalHour = arrival.getHours();
-	  const arrivalMinute = arrival.getMinutes();
-  
-	//   console.log(`Adjusted Current Time (UTC-4) → ${currentHour}:${currentMinute}`);
-	//   console.log(`Normalized Times → Sunset: ${sunsetHour}:${sunsetMinute}, Arrival: ${arrivalHour}:${arrivalMinute}`);
-  
-	  // Convert times to minutes from the start of the day for comparison
-	  const currentTimeInMinutes = currentHour * 60 + currentMinute;
-	  const sunsetTimeInMinutes = sunsetHour * 60 + sunsetMinute;
-	  const arrivalTimeInMinutes = arrivalHour * 60 + arrivalMinute;
-  
-	//   console.log("currentTimeInMinutes:", currentTimeInMinutes);
-	//   console.log("sunsetTimeInMinutes:", sunsetTimeInMinutes);
-	//   console.log("arrivalTimeInMinutes:", arrivalTimeInMinutes);
-  
-	  // If the trip has not started yet (arrival is before sunset), return 0%
-	  if (arrivalTimeInMinutes < sunsetTimeInMinutes) {
-		return '0.0%';
-	  }
-  
-	  // If the current time is after sunset, return 100% (the trip is over)
-	  if (currentTimeInMinutes >= sunsetTimeInMinutes) {
-		return '100.0%';
-	  }
-  
-	  // Calculate the elapsed time from current time to sunset
-	  const elapsedTime = sunsetTimeInMinutes - currentTimeInMinutes;
-	//   console.log("Elapsed Time (minutes):", elapsedTime);
-  
-	  // Parse the duration to get minutes (assuming the format "XX min")
-	  const [durMinStr] = durationStr.split(' ');
-	  const durationMin = parseInt(durMinStr);
-	  const durationMs = durationMin * 60 * 1000; // Convert duration to milliseconds
-  
-	  // Calculate the percentage of the trip completed based on the current time
-	  let percentage = (elapsedTime / durationMin) * 100;
-	  if (percentage>1000)
-	  {
-		percentage=percentage/100; 
-	  }
-	  else if (percentage>100)
-	  {
-		percentage=percentage/10;
-	  }
+		// Convert string arrival time (e.g., "19:30") into a Date object in UTC
+		const arrival = getArrivalTime(departure, durationMin);
+		console.log("Arrival", arrival);
 
 
-	  const percentAfterSunset = 
-		((arrivalTimeInMinutes - sunsetTimeInMinutes) / 
-		(arrivalTimeInMinutes - currentTimeInMinutes)) * 100;
-		console.log(`After sunset: ${percentAfterSunset.toFixed(1)}%`);
-	  return `${percentAfterSunset.toFixed(1)}%`;
+		const toMinutes = (date: Date) => date.getHours() * 60 + date.getMinutes()
+		const driveStartMin = toMinutes(departure)
+		const driveEndMin = toMinutes(arrival)
+		const sunsetMin = toMinutes(sunset)
+		const sunriseMin = toMinutes(sunrise)
 
-	  console.log("DURATION (minutes):", durationMin);
-	  console.log(`After sunset: ${percentage.toFixed(1)}%`);
-  
-	  return `${percentage.toFixed(1)}%`;
+		let nightMinutes = 0
+
+		for (let min = driveStartMin; min < driveEndMin; min++) {
+			const t = min % (24 * 60) // wrap around midnight
+			const isNight = (sunsetMin < sunriseMin)
+				? t >= sunsetMin && t < sunriseMin   // typical case (same night)
+				: t >= sunsetMin || t < sunriseMin   // spans midnight
+
+			if (isNight) nightMinutes++
+		}
+
+		const percent = (nightMinutes / durationMin) * 100
+		return `${percent.toFixed(1)}%`
 	} catch (error) {
-	  console.error("Error in getPercentage function:", error);
-	  return '0.0%'; // Default return value if there's an error
+		console.error('Error calculating nighttime percentage:', error)
+		return '0.0%'
 	}
-  };
+}
+
+
+
 
 /**
  * @function RouteSummaryCard
@@ -287,12 +258,17 @@ const RouteSummaryCard = ({
 				</Text>
 
 				<Text style={styles.detail}>
-					Sunset Time: {selectedRoute.sunsetTime}
+					Sunset Time: {' '}
+					{selectedRoute?.sunsetTime
+						? new Date(selectedRoute.sunsetTime).toLocaleString([], {
+							timeStyle: 'short',
+						})
+						: 'N/A'}
 				</Text>
 
 				<Text style={styles.detail}>
 					After Sunset Percentage:
-					{getPercentage(selectedRoute?.sunsetTime , computeArrivalTime(currentTime, selectedRoute.duration), formatDuration(selectedRoute.duration), currentTime)}
+					{getPercentage(new Date(selectedRoute?.sunsetTime) , new Date(selectedRoute?.sunriseTime), computeArrivalTime(new Date(selectedRoute?.departure), selectedRoute.duration), formatDuration(selectedRoute.duration), new Date(selectedRoute?.departure))}
 				</Text>
 
 				<Text>
