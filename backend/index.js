@@ -32,117 +32,160 @@ app.use(express.json());
  * @param {string} startTime - The time to start the journey.
  * @param {string} startDate - The date to start the journey.
  * @param {string} googleTime - The time in Google format.
+ * @param {Object} settings - The settings data
  * @returns {Object} - An object containing the computed routes and map data.
  */
 app.get("/api/getRoutes", async (req, res) => {
-  console.log("Calling the Change Start API!");
-  const {
-    startLat,
-    startLong,
-    destinationLat,
-    destinationLong,
-    startTime,
-    startDate,
-    googleTime,
-  } = req.query;
+    const { startLat, 
+           startLong, 
+           destinationLat,
+           destinationLong, 
+           startTime, 
+           startDate, 
+           googleTime, 
+           settings } = req.query;
 
-  // Validate the required parameters
-  if (
-    !startLat ||
-    !startLong ||
-    !destinationLat ||
-    !destinationLong ||
-    !googleTime ||
-    !startTime ||
-    !startDate
-  ) {
-    return res.status(400).json({ error: "Missing required parameters" });
-  }
+    if (!startLat 
+        || !startLong 
+        || !destinationLat 
+        || !destinationLong 
+        || !googleTime 
+        || !startTime 
+        || !startDate 
+        || !settings) {
+        return res.status(400).json({ error: "Missing required parameters" });
+    }
 
-  // Convert the start time and date to a Date object
-  const dateObject = new Date(googleTime);
-  console.log("This is the current time:", dateObject);
+    const url = "https://routes.googleapis.com/directions/v2:computeRoutes";
+    const headers = {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": API_KEY,
+      "X-Goog-FieldMask":
+        "routes.duration,routes.distanceMeters,routes.legs,routes.polyline",
+    };
 
-  const url = "https://routes.googleapis.com/directions/v2:computeRoutes";
-  const headers = {
-    "Content-Type": "application/json",
-    "X-Goog-Api-Key": API_KEY,
-    "X-Goog-FieldMask":
-      "routes.duration,routes.distanceMeters,routes.legs,routes.polyline",
-  };
-
-  // Body of the API request
-  const body = {
-    origin: {
-      location: {
-        latLng: {
-          latitude: parseFloat(startLat),
-          longitude: parseFloat(startLong),
+    // Body of the API request
+    const body = {
+      origin: {
+        location: {
+          latLng: {
+            latitude: parseFloat(startLat),
+            longitude: parseFloat(startLong),
+          },
         },
       },
-    },
-    destination: {
-      location: {
-        latLng: {
-          latitude: parseFloat(destinationLat),
-          longitude: parseFloat(destinationLong),
+      destination: {
+        location: {
+          latLng: {
+            latitude: parseFloat(destinationLat),
+            longitude: parseFloat(destinationLong),
+          },
         },
       },
-    },
-    travelMode: "DRIVE",
-    routingPreference: "TRAFFIC_AWARE",
-    computeAlternativeRoutes: true,
-    departureTime: googleTime,
-  };
+      travelMode: "DRIVE",
+      routingPreference: "TRAFFIC_AWARE",
+      computeAlternativeRoutes: true,
+      departureTime: googleTime,
+    };
 
-  // Try to make the API request
-  try {
-    console.log("Making Google API Call");
+  
+    try {
+      console.log("Making Google API Call");
+      
+      const response = await axios.post(url, body, { headers });
+      console.log("Google API Call finished");
+      const responseRoutes = response.data.routes;
+      const routes = [];
+      const mapDetails = [];
+      const manager = new Manager(settings);
+      
+      for (const route of responseRoutes) {
+        const legs = route.legs[0];
+        const r = new Route(legs, dateObject);
 
-    const response = await axios.post(url, body, { headers });
-    console.log("Google API Call finished");
-    const responseRoutes = response.data.routes;
-    const routes = [];
-    const mapDetails = [];
-    const manager = new Manager();
+        
+        // Set polyline directly
+        r.polyline = route.polyline.encodedPolyline;
+        
+        // Enrich with weather scoring
+        await r.getWaypointsEveryXMeters();
+        await r.setSunsetTime();
 
-    // Check if routes are available
-    for (const route of responseRoutes) {
-      const legs = route.legs[0];
-      console.log("Added a route:");
-      const r = new Route(legs, dateObject);
+        try {
+          await r.calculateWeatherScore(settings);
+        } catch (error) {
+          console.log(error)
+        }
 
-      // Set polyline directly
-      r.polyline = route.polyline.encodedPolyline;
+        
+  
+        // Push Route instance to scoring system
+        routes.push(r);
+        manager.addRoute(r);
 
-      // Enrich with weather scoring
-      await r.getWaypointsEveryXMeters();
-      await r.setSunsetTime();
-
-      try {
-        await r.calculateWeatherScore();
-      } catch (error) {
-        console.log(error);
+  
+        // Optional map data details
+        mapDetails.push({
+          distance: r.distance,
+          duration: r.time,
+          polyline: r.polyline,
+          start: r.locations[0],
+          end: r.locations[r.locations.length - 1],
+          weatherScore: r.weatherScore,
+          weatherType: r.weatherType,
+          weatherBreakdown: r.weatherBreakdown,
+          score: r.score,
+          departure: r.startDate.toISOString(),
+          sunsetTime: r.sunsetTime.toISOString(),
+          sunriseTime: r.sunriseTime.toISOString()
+        });  
       }
-
-      // Push Route instance to scoring system
-      routes.push(r);
-      manager.addRoute(r);
+      manager.addRoutesDiffTime();
+      const bestTimedRoute = manager.getBestTimedRoute()[0];
 
       // Optional map data details
       mapDetails.push({
-        distance: r.distance,
-        duration: r.time,
-        polyline: r.polyline,
-        start: r.locations[0],
-        end: r.locations[r.locations.length - 1],
-        weatherScore: r.weatherScore,
-        weatherType: r.weatherType,
-        weatherBreakdown: r.weatherBreakdown,
-        score: r.score,
-        departure: r.startDate.toISOString(),
-        sunsetTime: r.sunsetTime,
+        distance: bestTimedRoute.distance,
+        duration: bestTimedRoute.time,
+        polyline: bestTimedRoute.polyline,
+        start: bestTimedRoute.locations[0],
+        end: bestTimedRoute.locations[bestTimedRoute.locations.length - 1],
+        weatherScore: bestTimedRoute.weatherScore,
+        weatherType: bestTimedRoute.weatherType,
+        weatherBreakdown: bestTimedRoute.weatherBreakdown,
+        score: bestTimedRoute.score,
+        departure: bestTimedRoute.startDate.toISOString(),
+        sunsetTime: bestTimedRoute.sunsetTime.toISOString(),
+        sunriseTime: bestTimedRoute.sunriseTime.toISOString()
       });
+      
+      console.log("Best", bestTimedRoute.sunsetTime);
+      console.log("Best", bestTimedRoute.sunriseTime);
+      bestRoutes.push(bestTimedRoute);
+      
+      
+      const formattedRoutes = bestRoutes.map(r => ({
+          startAddress: r.startAddress,
+          destinationAddress: r.destinationAddress,
+          distance: r.distance,
+          time: r.time,
+          weatherScore: r.weatherScore,
+          weatherType: r.weatherType,
+          score: r.score,
+          polyline: r.polyline,
+          breakDown: r.weatherBreakdown,
+          departure: r.startDate.toISOString(),
+          sunsetTime: r.sunsetTime.toISOString(),
+          sunriseTime: r.sunriseTime.toISOString()
+        }));
+
+        // console.log(formattedRoutes.length);
+        // console.log("Formatted:", formattedRoutes);
+  
+      res.json({ routes: formattedRoutes, mapData: mapDetails });
+    } catch (error) {
+      // console.error("Error fetching route data (Change Start):", error.response.data , error.response.status, error.response.request, error.request.stack);
+      res.status(error.response?.status || 500).json({ error: "Failed to fetch routes" });
     }
 
     let bestRoutes = [manager.getBestRoute()];

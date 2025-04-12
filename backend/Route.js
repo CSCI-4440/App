@@ -104,6 +104,7 @@ class Route {
     this.weatherScore = 0;
     this.weatherType = null; // Will be set to the worst weather condition description
     this.sunsetTime = null;
+    this.sunriseTime = null;
   }
 
   /**
@@ -112,7 +113,7 @@ class Route {
    */
   async setSunsetTime() {
     // Fetch sunset time and set it
-    this.sunsetTime = await this.fetchSunsetTime();
+    this.sunsetTime = await this.fetchSunsetTime();  
   }
 
   /**
@@ -138,15 +139,16 @@ class Route {
     // console.log(this.destinationAddress.longitude)
     // console.log(API_KEY)
     const url = `https://api.openweathermap.org/data/2.5/weather?lat=${this.destinationAddress.latitude}&lon=${this.destinationAddress.longitude}&units=metric&appid=${API_KEY}`;
-
-    console.log(url);
     try {
       const response = await axios.get(url);
       // console.log("API Response:", response.data.sys.sunset); // Log the whole response
       const sunsetTimestamp = response.data.sys.sunset;
-      const sunsetDate = new Date(sunsetTimestamp * 1000); // Convert to milliseconds
-      // console.log("SUNSET:", sunsetDate.toLocaleTimeString());
-      return sunsetDate.toLocaleTimeString(); // Returns sunset time as a formatted string
+      const sunriseTimestamp = response.data.sys.sunrise;
+      const sunsetDate = new Date(sunsetTimestamp * 1000);
+      const sunriseDate = new Date(sunriseTimestamp * 1000); // Convert to milliseconds)
+      this.sunriseTime = sunriseDate;
+      
+      return sunsetDate  // Returns sunset time as a formatted string
     } catch (error) {
       console.error("Error fetching sunset time:", error.message);
       return null;
@@ -179,6 +181,9 @@ class Route {
       Location.clone(loc)
     );
     newRoute.weatherConditions = [...originalRoute.weatherConditions];
+    newRoute.sunriseTime = originalRoute.sunriseTime;
+    newRoute.sunsetTime = originalRoute.sunsetTime;
+
 
     return newRoute;
   }
@@ -200,6 +205,7 @@ class Route {
   get getStart() {
     return this.startAddress;
   }
+
 
   /**
    * @function getStartDate
@@ -244,6 +250,7 @@ class Route {
     return rounded;
   }
 
+
   /**
    * @function updateTime
    * @description Updates the time by adding a specified interval in minutes.
@@ -273,7 +280,8 @@ class Route {
     // const date = new Date('2025-04-11T10:00:00'); // Local time
     // const unixTime = Math.floor(date.getTime() / 1000);
     let lastLocTime = this.startDate;
-    let intervalMinutes = this.time / 60 / (this.distance / intervalMeters);
+    let intervalMinutes = (this.time / 60) / (this.distance / intervalMeters);
+
 
     // console.log(`DEPART  ${this.departTimeUnix}`);
     let accumulatedDistance = 0;
@@ -298,6 +306,7 @@ class Route {
         let ratio = remaining / stepDistance;
 
         let newLat = start.latitude + ratio * (end.latitude - start.latitude);
+        let newLong = start.longitude + ratio * (end.longitude - start.longitude);
         let newLong =
           start.longitude + ratio * (end.longitude - start.longitude);
 
@@ -329,11 +338,11 @@ class Route {
    * @returns {Promise<Object>} - A promise that resolves to an object containing the weather condition percentages.
    * @async
    */
-  async calculateWeatherScore() {
+  async calculateWeatherScore(settings) {
     await this.setSunsetTime();
-    let maxScore = 0;
     let worstCondition = null;
     let conditionCounts = {};
+    let maxScore = 0;
     let totalValidConditions = 0;
 
     // Initialize an array to collect weather conditions if needed later.
@@ -344,8 +353,16 @@ class Route {
       let weatherCondition = loc.getCondition(time);
       // Here we assume the Location class sets the weather description on `loc.weatherCondition`
       if (weatherCondition) {
+        let multiplier = 1;
+        for (const [key, value] of Object.entries(settings)) {
+          if (!value && description.toLowerCase().includes(key)) {
+            multipler = 0.1;
+          }
+        }
+
         const description = weatherCondition.toLowerCase();
-        const score = WEATHER_SCORES[description] ?? 0;
+        const score = (multiplier * WEATHER_SCORES[description]) ?? 0;
+        this.weatherScore += (multiplier * WEATHER_SCORES[description]) ?? 0;
         this.weatherConditions.push(description);
 
         if (score > 0) {
@@ -364,7 +381,6 @@ class Route {
       }
     }
 
-    this.weatherScore = maxScore;
     // Set weatherType to the worst weather condition (the one that produced maxScore)
     this.weatherType = worstCondition;
 

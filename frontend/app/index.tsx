@@ -23,8 +23,9 @@ import SplashScreen from './SplashScreen'
 import * as Location from 'expo-location'
 import Config from '../config'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
-const baseUrl = 'http://129.161.137.163:3000'
+const baseUrl = 'http://192.168.1.189:3000'
 
 export default function Index() {
 	const router = useRouter()
@@ -145,6 +146,22 @@ export default function Index() {
 		return true
 	}
 
+	const loadSettings = async () => {
+		try {
+			const alertsRaw = await AsyncStorage.getItem('weather-alert-settings')
+			const useLocationRaw = await AsyncStorage.getItem('use-location')
+
+			const alerts = alertsRaw ? JSON.parse(alertsRaw) : { snow: true, rain: true, wind: true }
+			const useLocation = useLocationRaw ? JSON.parse(useLocationRaw) : true
+
+			return { alerts, useLocation }
+		} catch (error) {
+			console.error('Failed to load settings:', error)
+			return { alerts: { snow: true, rain: true, wind: true }, useLocation: true }
+		}
+	}
+
+
 	const reverseGeocode = async (latitude: number, longitude: number) => {
 		const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${Config.GOOGLE_API_KEY}`
 
@@ -152,7 +169,6 @@ export default function Index() {
 			const response = await fetch(url)
 			const data = await response.json()
 			if (data.status === 'OK' && data.results.length > 0) {
-				console.log(data.results[0].formatted_address)
 				setStartAddress(data.results[0].formatted_address)
 			} else {
 				Alert.alert('Error', 'Failed to get address')
@@ -180,8 +196,8 @@ export default function Index() {
 
 		setLoading(true)
 		try {
-			console.log('Start Coords:', startLat, startLong)
-			console.log('Destination Coords:', destinationLat, destinationLong)
+			const settings = await loadSettings()
+			const { alerts, useLocation } = settings
 
 			if (!selectedDate) {
 				console.error('date is not found')
@@ -193,7 +209,7 @@ export default function Index() {
 			const googleTime = toGoogleTime(selectedDate, selectedTime)
 
 			const response = await axios.get(
-				`${baseUrl}/api/getRoutes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}&startTime=${selectedTime}&startDate=${selectedDate}&googleTime=${googleTime}`,
+				`${baseUrl}/api/getRoutes?startLat=${startLat}&startLong=${startLong}&destinationLat=${destinationLat}&destinationLong=${destinationLong}&startTime=${selectedTime}&startDate=${selectedDate}&googleTime=${googleTime}&settings=${alerts}`,
 			)
 
 			setApiResponse({
@@ -201,7 +217,6 @@ export default function Index() {
 				mapData: response.data.mapData ?? response.data.routes,
 			})
 
-			console.log(response.data.routes)
 
 			Animated.timing(summaryAnim, {
 				toValue: 1,
@@ -429,8 +444,10 @@ export default function Index() {
 					visible={showTimePicker}
 					onClose={() => setShowTimePicker(false)}
 					onConfirm={(date, time) => {
+						const [year, month, day] = date.split('-').map(Number)
+						const combined = new Date(Date.UTC(year, month - 1, day, time.getUTCHours(), time.getUTCMinutes()))					 
 						setSelectedDate(date)
-						setSelectedTime(time)
+						setSelectedTime(combined)
 						setShowTimePicker(false)
 					}}
 				/>

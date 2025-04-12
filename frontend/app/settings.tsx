@@ -5,9 +5,10 @@
  * The component is styled using React Native's StyleSheet and includes a button to save the settings.
  * */
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { View, Text, Switch, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native'
 import { useRouter } from 'expo-router'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 /**
  * @function Settings
@@ -31,6 +32,37 @@ export default function Settings() {
 	// Function to toggle alert settings
 	const toggleAlert = (key: keyof typeof alerts) => {
 		setAlerts({ ...alerts, [key]: !alerts[key] })
+	}
+
+	useEffect(() => {
+		const loadSettings = async () => {
+			try {
+				const alertsRaw = await AsyncStorage.getItem('weather-alert-settings')
+				const useLocationRaw = await AsyncStorage.getItem('use-location')
+	
+				if (alertsRaw) {
+					setAlerts(JSON.parse(alertsRaw))
+				}
+				if (useLocationRaw) {
+					setUseLocation(JSON.parse(useLocationRaw))
+				}
+			} catch (error) {
+				console.error('Failed to load saved settings:', error)
+			}
+		}
+	
+		loadSettings()
+	}, [])
+
+	const saveSettings = async () => {
+		try {
+			await AsyncStorage.setItem('weather-alert-settings', JSON.stringify(alerts))
+			await AsyncStorage.setItem('use-location', JSON.stringify(useLocation))
+			console.log('Settings saved successfully')
+			router.push({ pathname: '/', params: { skipSplash: 'true' } })
+		} catch (error) {
+			console.error('Failed to save settings:', error)
+		}
 	}
 
 	// Render the settings screen
@@ -67,7 +99,7 @@ export default function Settings() {
 
 				<TouchableOpacity
 					style={styles.doneButton}
-					onPress={() => router.push({ pathname: '/', params: { skipSplash: 'true' } })}
+					onPress={saveSettings}
 				>
 					<Text style={styles.doneButtonText}>Done</Text>
 				</TouchableOpacity>

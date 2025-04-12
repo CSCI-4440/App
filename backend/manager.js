@@ -31,11 +31,12 @@ const Location = require("./Location");
  * @static
  */
 class Manager {
-  constructor() {
+  constructor(settings) {
     // Store all routes here
     this.routes = [];
     this.routesDiffTime = [];
     this.timeSuggestions = [-6, -3, -2, -1, 1, 2, 3, 6];
+    this.settings = settings;
   }
 
   /**
@@ -87,7 +88,7 @@ class Manager {
         newStartTimeRoute.setStartDate = newStartTime;
         newStartTimeRoute.updateTimesAndConditions(changeTime);
         //HAVE TO FIGURE HOW TO UPDATE CONDITIONS
-        newStartTimeRoute.calculateWeatherScore();
+        newStartTimeRoute.calculateWeatherScore(this.settings);
         this.routesDiffTime.push(newStartTimeRoute);
       }
     }
