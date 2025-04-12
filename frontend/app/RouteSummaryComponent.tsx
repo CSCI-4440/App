@@ -156,14 +156,13 @@ const getPercentage = (
 
 		// Convert string arrival time (e.g., "19:30") into a Date object in UTC
 		const arrival = getArrivalTime(departure, durationMin);
-		console.log("Arrival", arrival);
 
 
 		const toMinutes = (date: Date) => date.getHours() * 60 + date.getMinutes()
 		const driveStartMin = toMinutes(departure)
-		const driveEndMin = toMinutes(arrival)
+		const driveEndMin = driveStartMin + durationMin
 		const sunsetMin = toMinutes(sunset)
-		const sunriseMin = toMinutes(sunrise)
+		const sunriseMin = toMinutes(sunrise) + 1440
 
 		let nightMinutes = 0
 
@@ -175,6 +174,7 @@ const getPercentage = (
 
 			if (isNight) nightMinutes++
 		}
+
 
 		const percent = (nightMinutes / durationMin) * 100
 		return `${percent.toFixed(1)}%`

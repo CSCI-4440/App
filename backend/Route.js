@@ -19,16 +19,16 @@ const WEATHER_SCORES = {
   "scattered clouds": 3,
   "broken clouds": 4,
   "overcast clouds": 5,
-  mist: 4,
-  smoke: 6,
-  haze: 5,
+  "mist": 4,
+  "smoke": 6,
+  "haze": 5,
   "sand/dust whirls": 6,
-  fog: 6,
-  sand: 7,
-  dust: 7,
+  "fog": 6,
+  "sand": 7,
+  "dust": 7,
   "volcanic ash": 9,
-  squalls: 8,
-  tornado: 10,
+  "squalls": 8,
+  "tornado": 10,
   "light rain": 4,
   "moderate rain": 5,
   "heavy intensity rain": 6,
@@ -40,9 +40,9 @@ const WEATHER_SCORES = {
   "heavy intensity shower rain": 7,
   "ragged shower rain": 7,
   "light snow": 4,
-  snow: 5,
+  "snow": 5,
   "heavy snow": 7,
-  sleet: 6,
+  "sleet": 6,
   "light shower sleet": 5,
   "shower sleet": 6,
   "light rain and snow": 5,
@@ -51,7 +51,7 @@ const WEATHER_SCORES = {
   "shower snow": 6,
   "heavy shower snow": 7,
   "light intensity drizzle": 3,
-  drizzle: 4,
+  "drizzle": 4,
   "heavy intensity drizzle": 5,
   "light intensity drizzle rain": 4,
   "drizzle rain": 5,
@@ -60,7 +60,7 @@ const WEATHER_SCORES = {
   "heavy shower rain and drizzle": 7,
   "shower drizzle": 5,
   "light thunderstorm": 5,
-  thunderstorm: 6,
+  "thunderstorm": 6,
   "heavy thunderstorm": 8,
   "ragged thunderstorm": 8,
   "thunderstorm with light rain": 6,
@@ -306,7 +306,6 @@ class Route {
         let ratio = remaining / stepDistance;
 
         let newLat = start.latitude + ratio * (end.latitude - start.latitude);
-        let newLong = start.longitude + ratio * (end.longitude - start.longitude);
         let newLong =
           start.longitude + ratio * (end.longitude - start.longitude);
 
