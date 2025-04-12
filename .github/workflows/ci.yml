@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [ "new-main" ]
+  pull_request:
+    branches: [ "new-main" ]
+
+jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14
+
+      # Run "npm install" in the backend folder
+      - name: Install Dependencies (Backend)
+        run: npm install
+        working-directory: backend
+
+      # Run "npm test" in the backend folder
+      - name: Run Tests (Backend)
+        run: npm test
+        working-directory: backend

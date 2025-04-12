@@ -85,29 +85,35 @@ const computeArrivalTime = (startTime: Date, durationInSeconds: number) => {
 	return arrival.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
+/**
+ * @function convertTo24Hour
+ * @description Converts a 12-hour time string to a 24-hour format.
+ * @param timeStr - The time string to be converted (e.g., "2:30 PM").
+ * @returns {string} - A string representing the time in 24-hour format (e.g., "14:30").
+ */
 const convertTo24Hour = (timeStr: string): string => {
-	if (!timeStr) return '00:00:00';
+	if (!timeStr) return '00:00:00'
 
 	// Replace any smart spaces like U+202F (narrow no-break space) with normal spaces
-	const cleanedStr = timeStr.replace(/\u202F/g, ' ').trim();
+	const cleanedStr = timeStr.replace(/\u202F/g, ' ').trim()
 
-	const [time, modifier] = cleanedStr.split(' ');
-	let [hours, minutes, seconds = '00'] = time.split(':');
+	const [time, modifier] = cleanedStr.split(' ')
+	let [hours, minutes, seconds = '00'] = time.split(':')
 
-	hours = parseInt(hours).toString();
+	hours = parseInt(hours).toString()
 
 	if (modifier == 'PM' && hours !== '12') {
-		hours = (parseInt(hours) + 12).toString();
+		hours = (parseInt(hours) + 12).toString()
 	} else if (modifier == 'AM' && hours === '12') {
-		hours = '00';
+		hours = '00'
 	}
 
-	hours = hours.padStart(2, '0');
-	minutes = minutes.padStart(2, '0');
-	seconds = seconds.padStart(2, '0');
+	hours = hours.padStart(2, '0')
+	minutes = minutes.padStart(2, '0')
+	seconds = seconds.padStart(2, '0')
 
-	return `${hours}:${minutes}:${seconds}`;
-};
+	return `${hours}:${minutes}:${seconds}`
+}
 
 const parseDuration = (durationStr: string): number => {
 	const hourMatch = durationStr.match(/(\d+)\s*hr/)
@@ -124,8 +130,16 @@ const getArrivalTime = (departureTime: Date, durationInMinutes: number): Date =>
 	return arrival
  }
  
-
-
+/**
+ * @function getPercentage
+ * @description Calculates the percentage of the trip completed after sunset.
+ * @param sunset - The sunset time as a Date object
+ * @param sunset - The sunrise time as a Date object
+ * @param arrivalStr - The arrival time string in 12-hour format (e.g., "8:00 PM").
+ * @param durationStr - The duration string (e.g., "30 min").
+ * @param departure - The departure time as a Date object
+ * @returns {string} - A string representing the percentage of the trip completed after sunset.
+ */
 const getPercentage = (
 	sunset: Date,
 	sunrise: Date,
@@ -245,9 +259,9 @@ const RouteSummaryCard = ({
 					Departure:{' '}
 					{selectedRoute?.departure
 						? new Date(selectedRoute.departure).toLocaleString([], {
-							dateStyle: 'medium',
-							timeStyle: 'short',
-						})
+								dateStyle: 'medium',
+								timeStyle: 'short',
+							})
 						: 'N/A'}
 				</Text>
 				<Text style={styles.detail}>
@@ -256,6 +270,7 @@ const RouteSummaryCard = ({
 						? computeArrivalTime(new Date(selectedRoute?.departure), selectedRoute.duration)
 						: 'N/A'}
 				</Text>
+
 
 				<Text style={styles.detail}>
 					Sunset Time: {' '}
@@ -268,12 +283,16 @@ const RouteSummaryCard = ({
 
 				<Text style={styles.detail}>
 					After Sunset Percentage:
-					{getPercentage(new Date(selectedRoute?.sunsetTime) , new Date(selectedRoute?.sunriseTime), computeArrivalTime(new Date(selectedRoute?.departure), selectedRoute.duration), formatDuration(selectedRoute.duration), new Date(selectedRoute?.departure))}
+					{getPercentage(
+            new Date(selectedRoute?.sunsetTime),
+            new Date(selectedRoute?.sunriseTime),
+            computeArrivalTime(new Date(selectedRoute?.departure), selectedRoute.duration),
+            formatDuration(selectedRoute.duration), new Date(selectedRoute?.departure)
+          )}
+          
 				</Text>
 
-				<Text>
-					Score: {selectedRoute?.weatherScore}
-				</Text>
+				<Text>Score: {selectedRoute?.weatherScore}</Text>
 
 				<Text style={styles.sectionHeader}>Weather Info:</Text>
 				{selectedRoute?.weatherBreakdown &&
@@ -282,7 +301,7 @@ const RouteSummaryCard = ({
 							<Text key={index} style={styles.detail}>
 								{condition.charAt(0).toUpperCase() + condition.slice(1)}: {percent}%
 							</Text>
-						)
+						),
 					)}
 			</ScrollView>
 
