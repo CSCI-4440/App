@@ -111,7 +111,7 @@ class Manager {
     });
 
     // Sort the routes by score (highest first) and return the top 'count' routes.
-    const sortedRoutes = this.routesDiffTime.sort((a, b) => b.score - a.score);
+    const sortedRoutes = this.routesDiffTime.sort((a, b) => a.score - b.score);
     return sortedRoutes.slice(0, 1);
   }
 
@@ -168,7 +168,7 @@ class Manager {
     });
 
     // Sort the routes by score (highest first) and return the best route.
-    const bestRoute = this.routes.sort((a, b) => b.score - a.score)[0];
+    const bestRoute = this.routes.sort((a, b) => a.score - b.score)[0];
 
     // Log the weather breakdown if it's available.
     // if (bestRoute.weatherBreakdown) {
