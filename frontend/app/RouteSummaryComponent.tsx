@@ -217,6 +217,16 @@ const RouteSummaryCard = ({
 				) : (
 					routes.map((_, index) => {
 						const color = routeColors[index % routeColors.length]
+						let label = ''
+
+						if (index === 0) {
+							label = 'Best Route'
+						} else if (index === routes.length - 1) {
+							label = 'Alternate Timing'
+						} else {
+							label = `Route ${index + 1}`
+						}
+
 						return (
 							<TouchableOpacity
 								key={index}
@@ -232,7 +242,7 @@ const RouteSummaryCard = ({
 										{ color: selectedRouteIndex === index ? '#fff' : '#333' },
 									]}
 								>
-									{color.charAt(0).toUpperCase() + color.slice(1)}
+									{label}
 								</Text>
 							</TouchableOpacity>
 						)
