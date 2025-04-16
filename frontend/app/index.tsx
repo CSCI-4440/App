@@ -25,7 +25,7 @@ import Config from '../config'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
-const baseUrl = 'http://192.168.1.189:3000'
+const baseUrl = 'http://129.161.136.15:3000'
 
 export default function Index() {
 	const router = useRouter()
@@ -161,7 +161,6 @@ export default function Index() {
 		}
 	}
 
-
 	const reverseGeocode = async (latitude: number, longitude: number) => {
 		const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${Config.GOOGLE_API_KEY}`
 
@@ -216,7 +215,6 @@ export default function Index() {
 				...response.data,
 				mapData: response.data.mapData ?? response.data.routes,
 			})
-
 
 			Animated.timing(summaryAnim, {
 				toValue: 1,
@@ -445,7 +443,9 @@ export default function Index() {
 					onClose={() => setShowTimePicker(false)}
 					onConfirm={(date, time) => {
 						const [year, month, day] = date.split('-').map(Number)
-						const combined = new Date(Date.UTC(year, month - 1, day, time.getUTCHours(), time.getUTCMinutes()))					 
+						const combined = new Date(
+							Date.UTC(year, month - 1, day, time.getUTCHours(), time.getUTCMinutes()),
+						)
 						setSelectedDate(date)
 						setSelectedTime(combined)
 						setShowTimePicker(false)
@@ -518,7 +518,6 @@ const styles = StyleSheet.create({
 		flexDirection: 'row',
 		justifyContent: 'space-between',
 		marginBottom: 10,
-		backgroundColor: '#007bff',
 		borderRadius: 16,
 		padding: 10,
 	},

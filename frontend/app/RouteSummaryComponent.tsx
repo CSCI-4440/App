@@ -128,8 +128,8 @@ const parseDuration = (durationStr: string): number => {
 const getArrivalTime = (departureTime: Date, durationInMinutes: number): Date => {
 	const arrival = new Date(departureTime.getTime() + durationInMinutes * 60 * 1000)
 	return arrival
- }
- 
+}
+
 /**
  * @function getPercentage
  * @description Calculates the percentage of the trip completed after sunset.
@@ -145,18 +145,16 @@ const getPercentage = (
 	sunrise: Date,
 	arrivalStr: string,
 	durationStr: string,
-	departure: Date
+	departure: Date,
 ): string => {
 	try {
-		
-		const durationMin = parseDuration(durationStr);
+		const durationMin = parseDuration(durationStr)
 		const date = `${departure.getFullYear()}-${departure.getMonth()}-`
-		
+
 		if (durationMin === 0) return '0.0%'
 
 		// Convert string arrival time (e.g., "19:30") into a Date object in UTC
-		const arrival = getArrivalTime(departure, durationMin);
-
+		const arrival = getArrivalTime(departure, durationMin)
 
 		const toMinutes = (date: Date) => date.getHours() * 60 + date.getMinutes()
 		const driveStartMin = toMinutes(departure)
@@ -168,13 +166,13 @@ const getPercentage = (
 
 		for (let min = driveStartMin; min < driveEndMin; min++) {
 			const t = min % (24 * 60) // wrap around midnight
-			const isNight = (sunsetMin < sunriseMin)
-				? t >= sunsetMin && t < sunriseMin   // typical case (same night)
-				: t >= sunsetMin || t < sunriseMin   // spans midnight
+			const isNight =
+				sunsetMin < sunriseMin
+					? t >= sunsetMin && t < sunriseMin // typical case (same night)
+					: t >= sunsetMin || t < sunriseMin // spans midnight
 
 			if (isNight) nightMinutes++
 		}
-
 
 		const percent = (nightMinutes / durationMin) * 100
 		return `${percent.toFixed(1)}%`
@@ -183,9 +181,6 @@ const getPercentage = (
 		return '0.0%'
 	}
 }
-
-
-
 
 /**
  * @function RouteSummaryCard
@@ -271,28 +266,27 @@ const RouteSummaryCard = ({
 						: 'N/A'}
 				</Text>
 
-
 				<Text style={styles.detail}>
-					Sunset Time: {' '}
+					Sunset Time:{' '}
 					{selectedRoute?.sunsetTime
 						? new Date(selectedRoute.sunsetTime).toLocaleString([], {
-							timeStyle: 'short',
-						})
+								timeStyle: 'short',
+							})
 						: 'N/A'}
 				</Text>
 
 				<Text style={styles.detail}>
 					After Sunset Percentage:
 					{getPercentage(
-            new Date(selectedRoute?.sunsetTime),
-            new Date(selectedRoute?.sunriseTime),
-            computeArrivalTime(new Date(selectedRoute?.departure), selectedRoute.duration),
-            formatDuration(selectedRoute.duration), new Date(selectedRoute?.departure)
-          )}
-          
+						new Date(selectedRoute?.sunsetTime),
+						new Date(selectedRoute?.sunriseTime),
+						computeArrivalTime(new Date(selectedRoute?.departure), selectedRoute.duration),
+						formatDuration(selectedRoute.duration),
+						new Date(selectedRoute?.departure),
+					)}
 				</Text>
 
-				<Text>Score: {selectedRoute?.weatherScore}</Text>
+				<Text style={styles.detail}>Score: {selectedRoute?.weatherScore}</Text>
 
 				<Text style={styles.sectionHeader}>Weather Info:</Text>
 				{selectedRoute?.weatherBreakdown &&
