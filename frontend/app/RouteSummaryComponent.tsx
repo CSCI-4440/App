@@ -206,26 +206,20 @@ const RouteSummaryCard = ({
 	// Render the route summary card
 	return (
 		<View style={styles.card}>
-			{/* Always show tab bar, even for one route */}
-			<View style={styles.tabRow}>
-				{routes.length === 1 ? (
-					<View style={[styles.tab, { backgroundColor: routeColors[0] }]}>
-						<Text style={[styles.tabText, { color: '#fff' }]}>
-							{routeColors[0].charAt(0).toUpperCase() + routeColors[0].slice(1)}
-						</Text>
-					</View>
-				) : (
-					routes.map((_, index) => {
+			{routes.length > 3 ? (
+				<ScrollView
+					horizontal
+					showsHorizontalScrollIndicator={false}
+					contentContainerStyle={styles.tabRowScrollable}
+				>
+					{routes.map((_, index) => {
 						const color = routeColors[index % routeColors.length]
-						let label = ''
-
-						if (index === 0) {
-							label = 'Best Route'
-						} else if (index === routes.length - 1) {
-							label = 'Alternate Timing'
-						} else {
-							label = `Route ${index + 1}`
-						}
+						const label =
+							index === 0
+								? 'Best Route'
+								: index === routes.length - 1
+									? 'Alternate Timing'
+									: `Route ${index + 1}`
 
 						return (
 							<TouchableOpacity
@@ -233,7 +227,9 @@ const RouteSummaryCard = ({
 								onPress={() => setSelectedRouteIndex(index)}
 								style={[
 									styles.tab,
-									{ backgroundColor: selectedRouteIndex === index ? color : '#eee' },
+									{
+										backgroundColor: selectedRouteIndex === index ? color : '#eee',
+									},
 								]}
 							>
 								<Text
@@ -246,9 +242,43 @@ const RouteSummaryCard = ({
 								</Text>
 							</TouchableOpacity>
 						)
-					})
-				)}
-			</View>
+					})}
+				</ScrollView>
+			) : (
+				<View style={styles.tabRow}>
+					{routes.map((_, index) => {
+						const color = routeColors[index % routeColors.length]
+						const label =
+							index === 0
+								? 'Best Route'
+								: index === routes.length - 1
+									? 'Alternate Timing'
+									: `Route ${index + 1}`
+
+						return (
+							<TouchableOpacity
+								key={index}
+								onPress={() => setSelectedRouteIndex(index)}
+								style={[
+									styles.tab,
+									{
+										backgroundColor: selectedRouteIndex === index ? color : '#eee',
+									},
+								]}
+							>
+								<Text
+									style={[
+										styles.tabText,
+										{ color: selectedRouteIndex === index ? '#fff' : '#333' },
+									]}
+								>
+									{label}
+								</Text>
+							</TouchableOpacity>
+						)
+					})}
+				</View>
+			)}
 
 			<ScrollView style={styles.scroll}>
 				<Text style={styles.routeTitle}>
@@ -322,12 +352,15 @@ const RouteSummaryCard = ({
 const styles = StyleSheet.create({
 	card: {
 		backgroundColor: '#fff',
-		padding: 16,
+		paddingTop: 12, // ⬅ was 8 — slightly more room at the top
+		paddingHorizontal: 16,
+		paddingBottom: 16,
 		elevation: 4,
-		height: 250,
+		height: 260,
 		borderTopLeftRadius: 0,
 		borderTopRightRadius: 0,
 	},
+
 	scroll: {
 		maxHeight: 240,
 	},
@@ -376,16 +409,32 @@ const styles = StyleSheet.create({
 		justifyContent: 'center',
 		marginBottom: 12,
 	},
-	tab: {
-		paddingVertical: 8,
-		paddingHorizontal: 16,
-		backgroundColor: '#eee',
-		marginHorizontal: 4,
-		borderRadius: 20,
+
+	tabRowScrollable: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		paddingHorizontal: 12,
+		marginTop: 6,
+		marginBottom: 12,
 	},
+
+	tab: {
+		paddingVertical: 6,
+		paddingHorizontal: 14,
+		backgroundColor: '#eee',
+		marginRight: 8,
+		borderRadius: 20,
+		height: 36,
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+
 	tabText: {
 		fontSize: 14,
-		color: '#333',
+		fontWeight: '600',
+		textAlign: 'center',
+		includeFontPadding: false,
+		textAlignVertical: 'center',
 	},
 })
 

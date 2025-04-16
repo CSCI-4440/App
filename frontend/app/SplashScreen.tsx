@@ -44,14 +44,14 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
 				// Fade in the static logo image
 				Animated.timing(cloudOpacity, {
 					toValue: 1,
-					duration: 700,
+					duration: 1000,
 					useNativeDriver: true,
 				}),
 				// Slide in text
 				Animated.parallel([
 					Animated.timing(textOpacity, {
 						toValue: 1,
-						duration: 600,
+						duration: 1000,
 						useNativeDriver: true,
 					}),
 					Animated.timing(textTranslateY, {
@@ -66,20 +66,20 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
 					Animated.parallel([
 						Animated.timing(cloudOpacity, {
 							toValue: 0,
-							duration: 500,
+							duration: 800,
 							useNativeDriver: true,
 						}),
 						Animated.timing(textOpacity, {
 							toValue: 0,
-							duration: 500,
+							duration: 1000,
 							useNativeDriver: true,
 						}),
 					]).start(() => {
 						onFinish()
 					})
-				}, 3000)
+				}, 6000)
 			})
-		}, 1000)
+		}, 3000)
 	}, [])
 
 	// Render the splash screen
