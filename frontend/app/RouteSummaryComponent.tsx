@@ -326,7 +326,7 @@ const RouteSummaryCard = ({
 					)}
 				</Text>
 
-				<Text style={styles.detail}>Score: {selectedRoute?.weatherScore}</Text>
+				<Text style={styles.detail}>Bad Weather Score: {selectedRoute?.weatherScore}</Text>
 
 				<Text style={styles.sectionHeader}>Weather Info:</Text>
 				{selectedRoute?.weatherBreakdown &&
