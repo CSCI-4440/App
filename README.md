@@ -1,31 +1,119 @@
-# Stratus
+# 🌤️ Stratus – Weather-Based Navigation App
 
-Instructions to run the project:
-  1. Open the command prompt and run “https://github.com/CSCI-4440/App.git”, and then “cd App”.
-  2. cd frontend and type “npm install”
-  3. cd ../backend and type “npm install”
-  4. Get the Google Maps API key:
-   4a. Go to Google Maps Credentials
-   4b. Create a project
-   4c. Create a billing account if needed
-   4d. Go to APIs & Services > Library
-   4e. Search for "Google Maps Routes API"
-   4f. Click Enable.
-   4g. Go to APIs & Services > Credentials
-   4h. Click Create Credentials > API 
-   4i. Copy the API key.
-  5. cd ../frontend, and type “ipconfig getifaddr en0” for Mac, “ipconfig” for Windows. Copy the IPv4 Address under Wireless LAN.
-  6. Type “nano config.js”
-  7. Add Google Maps API key and copied IP address in the designated spots
-  8. Press CTRL + o to save, press enter to confirm, then CTRL + x to exit.
-  9. Get the OpenWeatherMaps API Key
-    9a. Go to OpenWeatherMaps API Page. Required to sign in.
-    9b. The API key needed is given for student accounts. Register your account as a student account, and an API key will be emailed shortly.
-  10. cd ../backend and type “nano .env”
-  11. Add Google Maps API key and OpenWeatherMaps API key.
-  12. Press CTRL + o to save, press enter to confirm, then CTRL + x to exit.
-  13. type “npm start” in backend directory
-  14. cd ../frontend and type “npm start”
-  15. After running, a QR code will be generated
-  16. In the IOS App Store, download the Expo Go app.
-  17. Use the phone’s camera to scan the QR code, which will redirect the user to Expo Go where our project can be run.
+A React Native mobile app that recommends optimal travel routes based on real-time weather conditions using Google Maps and OpenWeather APIs.
+
+---
+
+## 🚀 Getting Started
+
+Follow these instructions to set up and run the project locally.
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/CSCI-4440/App.git
+cd App
+```
+
+### 2. Install Dependencies
+
+#### Frontend  
+```bash
+cd frontend
+npm install
+```
+
+#### Backend  
+```bash
+cd ../backend
+npm install
+```
+
+---
+
+## 🔑 API Setup
+
+### Google Maps API Key
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/).  
+2. Create a new project.  
+3. Create a billing account if required.  
+4. Navigate to **APIs & Services > Library**.  
+5. Search for **Google Maps Routes API** and click **Enable**.  
+6. Go to **APIs & Services > Credentials**.  
+7. Click **Create Credentials > API Key**.  
+8. Copy the API key.
+
+### Configure Frontend
+
+1. In the terminal:
+
+   - **Mac:**  
+     ```bash
+     ipconfig getifaddr en0
+     ```
+   - **Windows:**  
+     ```bash
+     ipconfig
+     ```
+2. Copy the **IPv4 address** under Wireless LAN.  
+3. Navigate to `frontend` and edit `config.js`:
+
+   ```bash
+   nano config.js
+   ```
+4. Add your **Google Maps API Key** and **IPv4 Address** in the designated fields.  
+5. Save and exit:  
+   - Press `CTRL + O`, then `Enter` to save.  
+   - Press `CTRL + X` to exit.  
+
+---
+
+### OpenWeatherMap API Key
+
+1. Go to [OpenWeatherMap](https://openweathermap.org/api) and sign in.  
+2. Register as a student account to receive an API key via email.  
+3. Navigate to the backend directory and edit the environment file:
+
+   ```bash
+   cd ../backend
+   nano .env
+   ```
+4. Add both the **Google Maps API key** and the **OpenWeatherMap API key** in the following format:
+
+   ```ini
+   GOOGLE_MAPS_API_KEY=your_google_api_key
+   OPENWEATHER_API_KEY=your_openweather_api_key
+   ```
+5. Save and exit.
+
+---
+
+## 🧪 Running the App
+
+#### Backend  
+```bash
+npm start
+```
+
+#### Frontend  
+```bash
+cd ../frontend
+npm start
+```
+
+A **QR code** will be generated.  
+1. Download the **Expo Go** app from the iOS App Store.  
+2. Use your phone’s camera to scan the QR code.  
+3. The app will open in Expo Go and run on your device.  
+
+---
+
+## 📍 Tech Stack
+
+- React Native + Expo Go  
+- Node.js (Backend)  
+- Google Maps API  
+- OpenWeatherMap API  
+
+---
